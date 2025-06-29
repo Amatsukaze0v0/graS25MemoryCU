@@ -57,11 +57,15 @@ SC_MODULE(MEMORY_CONTROLLER) {
     bool waitMemR;
     bool waitMemW;
 
-    MEMORY_CONTROLLER(sc_module_name name,uint32_t rom_size):sc_module(name)
+    // 消去thread error——定义process函数必须在创建thread前，除非加上这句声明。
+    SC_HAS_PROCESS(MEMORY_CONTROLLER);
+
+    //TODO： 添加了一个数组作为初始化rom参数，请检查。
+    MEMORY_CONTROLLER(sc_module_name name, uint32_t rom_size, uint32_t* rom_content):sc_module(name)
     {
         //initialisieren
         //这里直接创建期望主程序创建模块时已经检查了romsize
-        rom = new ROM("rom",rom_size);
+        rom = new ROM("rom",rom_size, rom_content);
         error.write(0);
         ready.write(0);
         waitRom = 0;
@@ -146,6 +150,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 data |= new_byte;
             }
             //这里暂时没有考虑mem的等待写完问题
+            // TODO： （刘）mem有个mem_ready信号，为0代表正在写入，为1代表完成。（但是实际上读取也会置零，不清楚这个是否需要处理）
             mem_w.write(1);
             mem_wdata.write(data);
             mem_addr.write(addr.read());
