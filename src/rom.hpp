@@ -20,7 +20,7 @@ SC_MODULE(ROM) {
      * @param rom_content 数组指针，指向初始化数组
      * 
      */
-    ROM(sc_module_name name,uint32_t size, uint32_t* rom_content):sc_module(name), memoryUnit("ROMspeicher", size, true){
+    ROM(sc_module_name name,uint32_t size, uint32_t* rom_content):sc_module(name), memoryUnit("ROMspeicher", size){
         // 如果数组过大, 报错
         if (memoryUnit.storage.size() < size) {
             SC_REPORT_ERROR("ROM", "ROM content size is bigger than storage size! Failed to initialize ROM.");
@@ -50,6 +50,15 @@ SC_MODULE(ROM) {
      */
     uint32_t read(uint32_t addr) {
         return memoryUnit.read(addr);
+    }
+
+    /**
+     * 强制写入1Byte值到ROM
+     * @param addr 地址，期待一个1B对齐的地址
+     * @param data 1Byte宽度的值
+     */
+    void writeSingleByteROM(uint32_t addr, uint8_t data) {
+        memoryUnit.writeByte(addr, data);
     }
 
 };

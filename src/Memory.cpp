@@ -9,7 +9,7 @@ SC_MODULE(Memory) {
 
     std::vector<sc_uint<32>> storage;
     uint32_t latency;   // todo: 单位未知
-    bool is_read_only;  // ROM 只读标志位，约定true为只读
+    /* bool is_read_only;  // ROM 只读标志位，约定true为只读 */
 
     SC_HAS_PROCESS(Memory);
 
@@ -27,7 +27,7 @@ SC_MODULE(Memory) {
      * @param latency 表示每次访问的延迟，目前单位为NS，空参默认值为0
      */
     Memory(sc_module_name name, uint32_t size, bool readonly = false, uint32_t latency = 0)
-            : sc_module(name), storage(size, 0), is_read_only(readonly), latency(latency) {
+            : sc_module(name), storage(size, 0), latency(latency) {
         mem_ready.initialize(true); // 初始内存应该准备好
         SC_THREAD(update);
         sensitive << mem_r << mem_w;
