@@ -8,8 +8,14 @@ using namespace sc_core;
 
 SC_MODULE(ROM) {
 
+    sc_in<bool> wide;
+    sc_in<uint32_t> addr;
     sc_out<bool> ready;
-    Memory memoryUnit;
+    sc_out<uint32_t> data;
+    std::map<uint32_t, uint8_t> memory;
+    uint32_t latency;
+    //事件触发规则参考https://www.learnsystemc.com/basic/event
+    sc_event start_read;
 
     // TODO: 此处memory没有设定latency，默认值为 0 Ns; 另外，初始化在哪？
     /**
@@ -20,18 +26,26 @@ SC_MODULE(ROM) {
      * @param rom_content 数组指针，指向初始化数组
      * 
      */
-    ROM(sc_module_name name,uint32_t size, uint32_t* rom_content):sc_module(name), memoryUnit("ROMspeicher", size){
-        // 如果数组过大, 报错
-        if (memoryUnit.storage.size() < size) {
-            SC_REPORT_ERROR("ROM", "ROM content size is bigger than storage size! Failed to initialize ROM.");
-        }
-        // 拷贝 rom_content 到 storage
-        for (uint32_t i = 0; i < size; ++i) {
-            memoryUnit.storage[i] = rom_content[i];  // uint32_t -> sc_uint<32> 自动转换
-        }
+    ROM(sc_module_name name,uint32_t size, uint32_t* rom_content, uint32_t latency):sc_module(name),latency(latency){
+        uint32_t i = 0;//Speicherzeiger byteweise zugreifbar
+        uint32_t j = 0;//Inhaltszeiger bewegt sich in 4-Byte-Schritten
+        while (rom_content) {
+            // 如果数组过大, 报错
+            if (i >= size) {
+                SC_REPORT_ERROR("ROM", "ROM content size is bigger than storage size! Failed to initialize ROM.");
+                //这里怎么退出有待研究
+                exit(1);
+            }
 
-        // TODO：存储模块ready即为ROM ready？是否存在其他要求？
-        ready.bind(memoryUnit.mem_ready);
+            uint32_t word = rom_content[j];
+
+            for (int k = 0; k < 4; ++k) {
+                memory[i++] = (word >> (k * 8)) & 0xFF;
+            }
+            ++j;
+        }
+        ready.write(false);
+        SC_THREAD(read);
     }
 
     /**
@@ -40,25 +54,47 @@ SC_MODULE(ROM) {
      * @return int, ROM大小
      */
     int size() {
-        return memoryUnit.storage.size();
+        return memory.size();
     }
 
-    /**
-     * 读取一个ROM整段4字节数据，默认已经进行过权限检查
-     * @param addr 地址
-     * @return 返回地址储存的 4Bytes对齐 的值
-     */
-    uint32_t read(uint32_t addr) {
-        return memoryUnit.read(addr);
+    void read() {
+        while(true) {
+            wait(start_read);
+            ready.write(false);
+            wait(latency, SC_NS);
+            uint32_t addresse = addr.read();
+            if (!wide) {
+                if (memory.count(addresse)) {
+                    data.write(static_cast<uint32_t>(memory[addresse]));
+                    ready.write(true);
+                } else {
+                    SC_REPORT_WARNING("ROM", "Read from unmapped address (byte)");
+                    data.write(0xFF);
+                    ready.write(true);
+                }
+            } else {
+                uint32_t result = 0;
+                for (int i = 0; i < 4; ++i) {
+                    uint32_t curr_addr = addresse + i;
+                    if (memory.count(curr_addr)) {
+                        result |= static_cast<uint32_t>(memory[curr_addr]) << (8 * i);
+                    } else {
+                        SC_REPORT_WARNING("ROM", "Read from unmapped address (word)");
+                        result |= 0xFF << (8 * i);
+                    }
+                }
+                data.write(result);
+                ready.write(true);
+            }
+        }
     }
 
-    /**
-     * 强制写入1Byte值到ROM
-     * @param addr 地址，期待一个1B对齐的地址
-     * @param data 1Byte宽度的值
-     */
-    void writeSingleByteROM(uint32_t addr, uint8_t data) {
-        memoryUnit.writeByte(addr, data);
+    bool write(uint32_t address,uint8_t data) {
+        if (memory.count(address)) {
+            memory[address] = data;
+            return true;
+        }
+        return false;
     }
 
 };
