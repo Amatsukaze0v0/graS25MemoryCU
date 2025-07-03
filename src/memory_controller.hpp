@@ -40,6 +40,11 @@ SC_MODULE(MEMORY_CONTROLLER) {
     sc_in<bool> clk,r,w,wide,mem_ready;
     sc_in<uint32_t> addr,wdata,mem_rdata;
     sc_in<uint8_t> user;
+    sc_in<bool> rom_ready;
+    sc_in<uint32_t> rom_data;
+
+    sc_signal<uint32_t> rom_addr_sig;
+    sc_signal<bool> rom_wide_sig;
 
     //output
     sc_out<uint32_t> rdata,mem_addr,mem_wdata;
@@ -61,11 +66,15 @@ SC_MODULE(MEMORY_CONTROLLER) {
     SC_HAS_PROCESS(MEMORY_CONTROLLER);
 
     //TODO： 添加了一个数组作为初始化rom参数，请检查。
-    MEMORY_CONTROLLER(sc_module_name name, uint32_t rom_size, uint32_t* rom_content):sc_module(name)
+    MEMORY_CONTROLLER(sc_module_name name, uint32_t rom_size, uint32_t* rom_content, uint32_t latency_rom):sc_module(name)
     {
         //initialisieren
         //这里直接创建期望主程序创建模块时已经检查了romsize
-        rom = new ROM("rom",rom_size, rom_content);
+        rom = new ROM("rom",rom_size, rom_content,latency_rom);
+        rom->addr(rom_addr_sig);
+        rom->wide(rom_wide_sig);
+        rom_ready(rom->ready);
+        rom_data(rom->data);
         error.write(0);
         ready.write(0);
         waitRom = 0;
@@ -106,11 +115,15 @@ SC_MODULE(MEMORY_CONTROLLER) {
             if (!waitRom) {
                 //Adresse liegt im ROM
                 //给rom传入读取地址和字节宽度
+                rom_addr_sig.write(addr.read());
+                rom_wide_sig.write(wide.read());
+                rom->start_read.notify();
                 waitRom = 1;
             }else if (waitRom){
-                if (rom->ready.read()) {
+                if (rom_ready.read()) {
                     waitRom = 0;
                     //rdata.write();写入rom读取的数据
+                    rdata.write(rom_data.read());
                     ready.write(1);
                 }
                 //Warten auf Rom
@@ -208,6 +221,17 @@ SC_MODULE(MEMORY_CONTROLLER) {
         }
         return true;
     }
+
+    void setRomAt(uint32_t address, uint8_t data) {
+        if (!rom->write(addr, data)) {
+            SC_REPORT_WARNING("ROM", "Write to unmapped address (byte)");
+        }
+    }
+
+    uint8_t getOwner(uint32_t addr) {
+        return gewalt[addr]?gewalt[addr]:0;
+    }
+
 
 };
 
