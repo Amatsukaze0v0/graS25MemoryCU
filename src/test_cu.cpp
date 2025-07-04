@@ -150,7 +150,8 @@ SC_MODULE(TESTBENCH) {
         printf("Then I start to wait CU finish. \n");
         wait(SC_ZERO_TIME);
         printf("This is a zero time so that the ready-signal is correctly setten. \n");
-/*      // TOOD: 问题出现在这里，诸如protection这种函数调用，ready error理应有跳变到1的过程，
+
+/*         // TOOD: 问题出现在这里，诸如protection这种函数调用，ready error理应有跳变到1的过程，
         // 但是测试时发现（可能由于是CU 线程快过tb）这个ready会陷入无限等待，因为ready早已为1。
         wait(ready.posedge_event());
         printf("Return value / result should be here. \n"); */
