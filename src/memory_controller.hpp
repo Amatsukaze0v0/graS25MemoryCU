@@ -224,6 +224,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 printf("Address 0x%08X with 1B alignment is not allowed to write Main Memory.\n", addr.read());
                 error.write(1);
                 ready.write(1);
+                wait(SC_ZERO_TIME);
                 return;
 /*              // 1B对齐，要先读取并拓展data字段使其正确写入
                 printf("[CU] memory write request (1B): addr=0x%08X, wdata=0x%02X, user=%u\n", addr.read(), wdata.read() & 0xFF, user.read());
@@ -282,6 +283,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
             printf("Die Adresse 0x%08X liegt in ROM und darf nicht verändert werden.\n", addr.read());
             error.write(1);
             ready.write(1);
+            wait(SC_ZERO_TIME);
         }
     }
 

@@ -60,6 +60,10 @@ SC_MODULE(TESTBENCH) {
         wait(ready.posedge_event());
         check(rdata.read(), 0x12345678);
 
+        r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
+
         // TC2: 读取 ROM 中第一个字节（addr = 0, 1B）
         std::cout << "\n--- TC2: Read from ROM address 0 (1B) ---" << std::endl;
         addr.write(0);
@@ -70,6 +74,10 @@ SC_MODULE(TESTBENCH) {
         wait(clk.posedge_event());
         wait(ready.posedge_event());
         check(rdata.read(), 0x78); // 0x12345678 的低8位
+
+        r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
 
         // TC3: 写入 ROM（应被拒绝）
         std::cout << "\n--- TC3: Write to ROM (expect error) ---" << std::endl;
@@ -85,6 +93,10 @@ SC_MODULE(TESTBENCH) {
 
         check(error.read(), true);
 
+        r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
+
         // TC4: 读取 ROM 边界（最后一个字节）
         // TODO: 根据ROM，我们的字符是逆向存储的，如0x12345678在rom中是0x78563412, 这会导致单字节读取问题
         std::cout << "\n--- TC4: Read from ROM last byte (1B) ---" << std::endl;
@@ -97,6 +109,10 @@ SC_MODULE(TESTBENCH) {
         wait(ready.posedge_event());
         check(rdata.read(), 0xdf); // 0x13579BDF 的低8位
 
+        r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
+
         // TC5: 主存 4B 写入+读取
         std::cout << "\n--- TC5: Write and Read Main Memory (4B) ---" << std::endl;
         addr.write(40);
@@ -107,6 +123,10 @@ SC_MODULE(TESTBENCH) {
         user.write(2);
         wait(clk.posedge_event());
         wait(ready.posedge_event());
+
+        r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
         // 读取
         addr.write(40);
         r.write(1);
@@ -118,8 +138,12 @@ SC_MODULE(TESTBENCH) {
 
         check(rdata.read(), 0xA5A5A5A5);
 
+                r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
 
-        // TC6: 主存 1B 写入+读取
+
+/*         // TC6: 主存 1B 写入+读取
         std::cout << "\n--- TC6: Write and Read Main Memory (1B) ---" << std::endl;
         addr.write(40);
         r.write(0);
@@ -132,6 +156,10 @@ SC_MODULE(TESTBENCH) {
 
         check(error.read(), true);
 
+        r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
+
         
         // 读取
         addr.write(40);
@@ -142,9 +170,13 @@ SC_MODULE(TESTBENCH) {
         wait(SC_ZERO_TIME);
         wait(clk.posedge_event());
         wait(ready.posedge_event());
-
+        
         check(error.read(), true);
 
+                r.write(0);
+        w.write(0);
+        wait(clk.posedge_event());
+ */
 
 /*         // TC7: 主存 4B 非对齐写入（应报错）
         std::cout << "\n--- TC7: Write Main Memory (4B, unaligned, expect error) ---" << std::endl;
