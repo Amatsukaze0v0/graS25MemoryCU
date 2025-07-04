@@ -1,5 +1,6 @@
 #include<systemc>
-#include"Memory.cpp"
+#include <map>
+#include "Memory.cpp"
 using namespace sc_core;
 
 
@@ -8,7 +9,7 @@ using namespace sc_core;
 
 SC_MODULE(ROM) {
 
-    sc_in<bool> wide;
+    sc_in<bool> wide, read_en {"ROM_enable"};
     sc_in<uint32_t> addr;
     sc_out<bool> ready;
     sc_out<uint32_t> data;
@@ -17,7 +18,9 @@ SC_MODULE(ROM) {
     //事件触发规则参考https://www.learnsystemc.com/basic/event
     sc_event start_read;
 
-    // TODO: 此处memory没有设定latency，默认值为 0 Ns; 另外，初始化在哪？
+    SC_HAS_PROCESS(ROM);
+
+    // TODO: 此处memory没有设定latency，默认值为 0 Ns;
     /**
      * 创建一个ROM，存在对于size的二次检查
      * 
@@ -26,25 +29,32 @@ SC_MODULE(ROM) {
      * @param rom_content 数组指针，指向初始化数组
      * 
      */
-    ROM(sc_module_name name,uint32_t size, uint32_t* rom_content, uint32_t latency):sc_module(name),latency(latency){
-        uint32_t i = 0;//Speicherzeiger byteweise zugreifbar
-        uint32_t j = 0;//Inhaltszeiger bewegt sich in 4-Byte-Schritten
-        while (rom_content) {
-            // 如果数组过大, 报错
-            if (i >= size) {
-                SC_REPORT_ERROR("ROM", "ROM content size is bigger than storage size! Failed to initialize ROM.");
-                //这里怎么退出有待研究
-                exit(1);
-            }
-
+    ROM(sc_module_name name, uint32_t size, uint32_t* rom_content, uint32_t rom_content_size, uint32_t latency)
+        : sc_module(name), latency(latency), ready("rom_ready"), data("rom_data_out") {
+        uint32_t i = 0; // byte index in memory
+        uint32_t j = 0; // word index in rom_content
+        
+        // 计算需要的字节数 (rom_content_size * 4)
+        uint32_t required_size = rom_content_size * 4;
+        if (required_size > size) {
+            SC_REPORT_ERROR("ROM", "ROM content size is bigger than storage size! Failed to initialize ROM.");
+            exit(1);
+        }
+        
+        // 复制内容
+        for (j = 0; j < rom_content_size; ++j) {
             uint32_t word = rom_content[j];
-
             for (int k = 0; k < 4; ++k) {
                 memory[i++] = (word >> (k * 8)) & 0xFF;
             }
-            ++j;
+            printf("ROM writing value: 0x%08x on Address 0x%08x. \n", word, j * 4);
         }
-        ready.write(false);
+        
+        // 用0填充剩余空间
+        for (; i < size; ++i) {
+            memory[i] = 0;
+        }
+        
         SC_THREAD(read);
     }
 
@@ -59,13 +69,15 @@ SC_MODULE(ROM) {
 
     void read() {
         while(true) {
-            wait(start_read);
+            wait(read_en.posedge_event());
             ready.write(false);
+
             wait(latency, SC_NS);
             uint32_t addresse = addr.read();
-            if (!wide) {
+            if (!wide.read()) {
                 if (memory.count(addresse)) {
                     data.write(static_cast<uint32_t>(memory[addresse]));
+                    printf("ROM found 1B value: 0x%08x at Address 0x%08x.\n", static_cast<uint32_t>(memory[addresse]), addresse);
                     ready.write(true);
                 } else {
                     SC_REPORT_WARNING("ROM", "Read from unmapped address (byte)");
@@ -84,6 +96,7 @@ SC_MODULE(ROM) {
                     }
                 }
                 data.write(result);
+                printf("ROM found 4B value: 0x%08x at Address 0x%08x.\n", result, addresse);
                 ready.write(true);
             }
         }

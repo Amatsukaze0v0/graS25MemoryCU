@@ -8,7 +8,7 @@ using namespace sc_core;
 #define LATENCY 100
 
 SC_MODULE(MAIN_MEMORY) {
-  sc_in<bool> clk;
+  sc_in<bool> clk, mem_en {"memory_enable"};
 
   sc_in<uint32_t> addr;
   sc_in<uint32_t> wdata;
@@ -16,7 +16,7 @@ SC_MODULE(MAIN_MEMORY) {
   sc_in<bool> w;
 
   sc_out<uint32_t> rdata;
-  sc_out<bool> ready;
+  sc_out<bool> ready {"ready_in_Mem"};
 
   std::map<uint32_t, uint32_t> memory;
 
@@ -27,8 +27,7 @@ SC_MODULE(MAIN_MEMORY) {
 
   void behaviour() {
     while(true) {
-      wait();
-
+      wait(mem_en.posedge_event());
       if (r.read()) {
         doRead(w.read());
       }
@@ -74,7 +73,7 @@ SC_MODULE(MAIN_MEMORY) {
       }
       result |= value << (i * 8);
     }
-
+    printf("[MEM] Value got from memory as 0x%08x at address 0x%08x. \n", result, address);
     return result;
   }
 
@@ -85,6 +84,7 @@ SC_MODULE(MAIN_MEMORY) {
         break;
       }
     }
+    printf("[MEM] Value set to memory as 0x%08x at address 0x%08x. \n", value, address);
   }
 };
 

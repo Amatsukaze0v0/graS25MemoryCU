@@ -2,7 +2,7 @@
 
 SC_MODULE(ControlUnit){
 
-    sc_in<bool> clk;
+    sc_clock clk;
     sc_in<uint32_t> addr, wdata, mem_rdata;
     sc_in<bool> r, w, wide, mem_ready;
     sc_in<uint8_t> user;
