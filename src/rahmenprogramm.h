@@ -18,19 +18,6 @@ struct Request {
     uint8_t wide; // 1 = 4Bytes, 0 = 1Byte
 };
 
-/*
-struct Result run_simulation {
-    uint32_t cycles,
-    const char* tracefile,
-    uint32_t latencyRom,
-    uint32_t romSize,
-    uint32_t blockSize,
-    uint32_t* romContent,
-    uint32_t numRequests,
-    struct Request* requests
-};
-*/
-
 typedef struct{
     uint32_t cycles;
     char* tracefile; // Path to Tracfile
@@ -52,3 +39,22 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size, uint32_t* ac
 int parse_csv_file(const char* filename, struct Request** requests, uint32_t* num_requests);
 
 #endif
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+struct Result run_simulation {
+    uint32_t cycles,
+    const char* tracefile,
+    uint32_t latencyRom,
+    uint32_t romSize,
+    uint32_t blockSize,
+    uint32_t* romContent,
+    uint32_t numRequests,
+    struct Request* requests
+};
+#ifdef __cplusplus
+}
+#endif
+
