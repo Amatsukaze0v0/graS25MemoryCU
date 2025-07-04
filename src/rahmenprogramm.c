@@ -208,10 +208,17 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
 
-    /*
     struct Result result = run_simulation(
+        config.cycles,
+        config.tracefile,
+        config.latency_rom,
+        config.rom_size,
+        config.block_size,
+        rom_content,
+        rom_content_size,
+        num_requests,
+        requests
     );
-    */
 
     printf("\n --- Simulation Finished --- \n");
     printf("Cycles: \n");
