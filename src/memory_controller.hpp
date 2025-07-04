@@ -110,8 +110,10 @@ SC_MODULE(MEMORY_CONTROLLER) {
     void process() {
         while (true) {
             wait(clk.posedge_event());
+            printf("CU job started~ \n");
             if (r.read() && w.read()){
                 printf("Fehler: Gleichzeitiger Lese- und Schreibzugriff auf Adresse 0x%08X ist nicht erlaubt.\n", addr.read());
+                continue;
             }
             if (r.read()) {
                 ready.write(0);
@@ -121,18 +123,23 @@ SC_MODULE(MEMORY_CONTROLLER) {
                     error.write(1);
                     ready.write(1);
                     wait(SC_ZERO_TIME);
+                    continue;
                 }
             }
             if (w.read()) {
                 ready.write(0);
                 if (protection()) {
-                    write();
+                    write();  
                 }else {
                     error.write(1);
                     ready.write(1);
                     wait(SC_ZERO_TIME);
+                    continue;
                 }
             }
+
+            error.write(0);
+
         }
     }
 
@@ -191,7 +198,9 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 // 题目要求：主存仅支持4B访问
                 printf("Address 0x%08X with 1B alignment is not allowed to read Main Memory.\n", addr.read());
                 error.write(1);
-                ready.write(1);
+                ready.write(1);        
+                // 重置w信号
+                mem_w.write(0);
                 wait(SC_ZERO_TIME);
                 return;
             }
@@ -221,11 +230,12 @@ SC_MODULE(MEMORY_CONTROLLER) {
             // 检查对齐情况
             if (!wide.read()) {
                 // 题目要求：主存仅支持4B访问
-                printf("Address 0x%08X with 1B alignment is not allowed to write Main Memory.\n", addr.read());
+                // printf("Address 0x%08X with 1B alignment is not allowed to write Main Memory.\n", addr.read());
                 error.write(1);
                 ready.write(1);
                 wait(SC_ZERO_TIME);
                 return;
+
 /*              // 1B对齐，要先读取并拓展data字段使其正确写入
                 printf("[CU] memory write request (1B): addr=0x%08X, wdata=0x%02X, user=%u\n", addr.read(), wdata.read() & 0xFF, user.read());
                 mem_addr.write(addr);
@@ -292,6 +302,8 @@ SC_MODULE(MEMORY_CONTROLLER) {
         uint8_t benutzer = user.read();
         uint32_t adresse = addr.read();
         uint32_t num_bytes = wide.read() ? 4 : 1;
+
+        ready.write(0);
 
         for (uint32_t i = 0; i < num_bytes; ++i) {
             uint32_t byte_addr = adresse + i;
