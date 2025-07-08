@@ -150,7 +150,8 @@ SC_MODULE(TESTBENCH) {
         printf("Then I start to wait CU finish. \n");
         wait(SC_ZERO_TIME);
         printf("This is a zero time so that the ready-signal is correctly setten. \n");
-/*      // TOOD: 问题出现在这里，诸如protection这种函数调用，ready error理应有跳变到1的过程，
+
+/*         // TOOD: 问题出现在这里，诸如protection这种函数调用，ready error理应有跳变到1的过程，
         // 但是测试时发现（可能由于是CU 线程快过tb）这个ready会陷入无限等待，因为ready早已为1。
         wait(ready.posedge_event());
         printf("Return value / result should be here. \n"); */
@@ -214,7 +215,7 @@ SC_MODULE(TESTBENCH) {
         printf("but this time only set the r/w to ZERO~ \n");
 
 
-/*         // TC8: 主存 权限测试
+        // TC8: 主存 权限测试
         std::cout << "\n--- TC8: Main Memory permission test ---" << std::endl;
         addr.write(48);
         r.write(0);
@@ -222,8 +223,12 @@ SC_MODULE(TESTBENCH) {
         wide.write(1);
         wdata.write(0x11223344);
         user.write(3);
+        printf("Trying to write the data as user3.\n");
         wait(clk.posedge_event());
         wait(ready.posedge_event());
+        printf("Data should be written.\n");
+        wait(SC_ZERO_TIME);
+        
 
         // 另一个user尝试读取
         addr.write(48);
@@ -231,12 +236,14 @@ SC_MODULE(TESTBENCH) {
         w.write(0);
         wide.write(1);
         user.write(4); // 没有权限
+        printf("Trying to read the data as user4.\n");
         wait(clk.posedge_event());
-        wait(ready.posedge_event());
+        wait(SC_ZERO_TIME);
+
         check(error.read(), true);
         r.write(0);
         wait(clk.posedge_event());
-        wait(ready.negedge_event()); */
+
 
 /*         // TC9: ROM 超出范围读取
         std::cout << "\n--- TC9: Read ROM out of range ---" << std::endl;

@@ -40,8 +40,8 @@ SC_MODULE(MEMORY_CONTROLLER) {
     sc_in<bool> clk,r,w,wide,mem_ready;
     sc_in<uint32_t> addr,wdata,mem_rdata;
     sc_in<uint8_t> user;
-    sc_in<bool> rom_ready;
-    sc_in<uint32_t> rom_data;   //这是什么用途？
+/*     sc_in<bool> rom_ready;
+    sc_in<uint32_t> rom_data;   //这是什么用途？ */
 
     sc_signal<uint32_t> rom_addr_sig, wdata_cu_mem, rdata_cu_mem, addr_cu_mem, data_cu_rom;   
     sc_signal<bool> rom_read_en, mem_en {"Memory_enalbe_in_CU"}, rom_wide_sig, ready_cu_mem, w_cu_mem, r_cu_mem, ready_cu_rom;   
@@ -73,13 +73,14 @@ SC_MODULE(MEMORY_CONTROLLER) {
     {
         //initialisieren
         //这里直接创建期望主程序创建模块时已经检查了romsize
+        // for
         rom = new ROM("rom", rom_size, rom_content, 8, latency_rom);
         rom->read_en(rom_read_en);
         rom->addr(rom_addr_sig);
         rom->wide(rom_wide_sig);
         rom->ready(ready_cu_rom);
-        rom_ready(ready_cu_rom);
-        rom_data(data_cu_rom);
+        //rom_ready(ready_cu_rom);
+        //rom_data(data_cu_rom);
         rom->data(data_cu_rom);
 
         // 初始化一块主存
@@ -172,15 +173,15 @@ SC_MODULE(MEMORY_CONTROLLER) {
             rom_read_en.write(1);
             printf("[CU] wait for rom_ready.posedge_event() ...\n");
             // Warten auf Rom —— 等待ROM完成工作并回传，ROM处理宽度问题
-            wait(rom_ready.posedge_event());
+            wait(ready_cu_rom.posedge_event());
             wait(SC_ZERO_TIME);
-            printf("[CU] rom_ready arrived, rom_data = 0x%08X\n", rom_data.read());
+            printf("[CU] rom_ready arrived, rom_data = 0x%08X\n", data_cu_rom.read());
 
             // 读取返回信号, 宽度判断由ROM处理
-            rdata.write(rom_data.read());
+            rdata.write(data_cu_rom.read());
             rom_read_en.write(0);
             ready.write(1);   
-            printf("[CU] rdata set to 0x%08X, ready=1\n", rom_data.read());
+            printf("[CU] rdata set to 0x%08X, ready=1\n", data_cu_rom.read());
             //到这一步我们认为ROM已经成功读取， 行为结束
 
         } else {
@@ -277,13 +278,11 @@ SC_MODULE(MEMORY_CONTROLLER) {
             printf("[CU] memory write done: addr=0x%08X, wdata=0x%08X\n", addr.read(), new_data);
             //Benutzer mit Adresse verknüpfen
             if (user.read() != 0 && user.read() != 255) {
-                for (uint32_t i = 0; i < (wide.read() ? 4 : 1); ++i) {
-                    gewalt[addr.read() + i] = user.read();
-                }
+                uint32_t block_addr = (addr.read() / block_size) * block_size;
+                gewalt[block_addr] = user.read();
             } else if (user.read() == 255) {
-                for (uint32_t i = 0; i < (wide.read() ? 4 : 1); ++i) {
-                    gewalt.erase(addr.read() + i);
-                }
+                uint32_t block_addr = (addr.read() / block_size) * block_size;
+                gewalt.erase(block_addr);
             }
             waitMemW = 0;
             mem_en.write(0);
@@ -308,28 +307,33 @@ SC_MODULE(MEMORY_CONTROLLER) {
         for (uint32_t i = 0; i < num_bytes; ++i) {
             uint32_t byte_addr = adresse + i;
 
-            if (byte_addr < rom ->size()) {
+            // ROM 区域允许读，不允许写
+            if (byte_addr < rom->size()) {
                 if (w.read()) {
                     printf("Fehler: Schreibzugriff auf ROM-Adresse 0x%08X ist verboten.\n", adresse);
                     return false;
                 }
-                //Jeder darf ROM zugreifen
-                break;
+                // Jeder darf ROM lesen
+                continue;
             }
 
-            //User 0 und 255 dürfen alle Adressen zugreifen.
+            // 超级用户永远拥有权限
             if (benutzer == 0 || benutzer == 255) {
                 continue;
             }
 
-            //Überprüfen ob Adresse schon Benutzer hat
-            auto it = gewalt.find(byte_addr);
+            // 计算所属 block 的起始地址
+            uint32_t block_addr = (byte_addr / block_size) * block_size;
+
+            auto it = gewalt.find(block_addr);
             if (it == gewalt.end()) {
+                // 这个 block 还没有 owner，任何人都可以访问
                 continue;
             }
 
             if (it->second != benutzer) {
-                printf("User %u hat keine Berechtigung auf Adresse 0x%08X.\n", benutzer, byte_addr);
+                printf("User %u hat keine Berechtigung auf Block 0x%08X (Adresse 0x%08X).\n",
+                    benutzer, block_addr, byte_addr);
                 return false;
             }
         }
@@ -343,7 +347,9 @@ SC_MODULE(MEMORY_CONTROLLER) {
     }
 
     uint8_t getOwner(uint32_t addr) {
-        return gewalt[addr]?gewalt[addr]:0;
+        uint32_t block_addr = (addr / block_size) * block_size;
+        auto it = gewalt.find(block_addr);
+        return it != gewalt.end() ? it->second : 0;
     }
 
 
