@@ -233,7 +233,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
             uint32_t new_data;
             // 检查对齐情况
             if (!wide.read()) {
-             // 1B对齐，要先读取并拓展data字段使其正确写入
+                // 1B对齐，要先读取并拓展data字段使其正确写入
                 printf("[CU] memory write request (1B): addr=0x%08X, wdata=0x%02X, user=%u\n", addr.read(), wdata.read() & 0xFF, user.read());
                 mem_addr.write(addr);
                 mem_r.write(1);

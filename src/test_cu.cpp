@@ -180,7 +180,7 @@ SC_MODULE(TESTBENCH) {
 
 
         // TC7: 主存 4B 非对齐写入
-        std::cout << "\n--- TC7: Write Main Memory (4B, unaligned, expect error) ---" << std::endl;
+        std::cout << "\n--- TC7: Write Main Memory (4B, unaligned) ---" << std::endl;
         addr.write(42); // 非4字节对齐
         r.write(0);
         w.write(1);
@@ -202,9 +202,11 @@ SC_MODULE(TESTBENCH) {
         r.write(0);
         wait(SC_ZERO_TIME);
         // TODO: 这里应该读到什么？？？
-        // 已知 40 = 0xa5a5a5a5; 42 = 0xDEADBEEF
-        // 那么 40 - 46 应该为 0xa5a5DEADBEEF ?
-        check(rdata.read(), 0xA5A5DEAD);
+        // 已知 40 = 0x1234565a; 42 = 0xDEADBEEF
+        // 那么 40 - 46 应该为 0x1234DEADBEEF ?
+        // 目前存储实际是 0x5a56EFBEADDE
+        // TODO: 因此修改问题是：非对齐地址需要分开存放！
+        check(rdata.read(), 0x1234DEAD);
 
         r.write(0);
         w.write(0);
