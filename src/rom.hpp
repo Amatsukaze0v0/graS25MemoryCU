@@ -9,7 +9,7 @@ using namespace sc_core;
 
 SC_MODULE(ROM) {
 
-    sc_in<bool> wide, read_en {"ROM_enable"};
+    sc_in<bool> clk, wide, read_en {"ROM_enable"};
     sc_in<uint32_t> addr;
     sc_out<bool> ready;
     sc_out<uint32_t> data;
@@ -34,12 +34,12 @@ SC_MODULE(ROM) {
         uint32_t i = 0; // byte index in memory
         uint32_t j = 0; // word index in rom_content
         
-        // 计算需要的字节数 (rom_content_size * 4)
+        // 计算需要的字节数 (rom_content_size * 4), 无需判断大小问题，已由RP处理
         uint32_t required_size = rom_content_size * 4;
-        if (required_size > size) {
+/*         if (required_size > size) {
             SC_REPORT_ERROR("ROM", "ROM content size is bigger than storage size! Failed to initialize ROM.");
             exit(1);
-        }
+        } */
         
         // 复制内容
         for (j = 0; j < rom_content_size; ++j) {
@@ -56,6 +56,7 @@ SC_MODULE(ROM) {
         }
         
         SC_THREAD(read);
+        sensitive << clk.pos();
     }
 
     /**
@@ -69,36 +70,39 @@ SC_MODULE(ROM) {
 
     void read() {
         while(true) {
-            wait(read_en.posedge_event());
-            ready.write(false);
+            wait();
+            if(read_en.read()) {
+                ready.write(false);
 
-            wait(latency, SC_NS);
-            uint32_t addresse = addr.read();
-            if (!wide.read()) {
-                if (memory.count(addresse)) {
-                    data.write(static_cast<uint32_t>(memory[addresse]));
-                    printf("ROM found 1B value: 0x%08x at Address 0x%08x.\n", static_cast<uint32_t>(memory[addresse]), addresse);
-                    ready.write(true);
-                } else {
-                    SC_REPORT_WARNING("ROM", "Read from unmapped address (byte)");
-                    data.write(0xFF);
-                    ready.write(true);
-                }
-            } else {
-                uint32_t result = 0;
-                for (int i = 0; i < 4; ++i) {
-                    uint32_t curr_addr = addresse + i;
-                    if (memory.count(curr_addr)) {
-                        result |= static_cast<uint32_t>(memory[curr_addr]) << (8 * i);
+                wait(latency, SC_NS);
+                uint32_t addresse = addr.read();
+                if (!wide.read()) {
+                    if (memory.count(addresse)) {
+                        data.write(static_cast<uint32_t>(memory[addresse]));
+                        printf("ROM found 1B value: 0x%08x at Address 0x%08x.\n", static_cast<uint32_t>(memory[addresse]), addresse);
+                        ready.write(true);
                     } else {
-                        SC_REPORT_WARNING("ROM", "Read from unmapped address (word)");
-                        result |= 0xFF << (8 * i);
+                        SC_REPORT_WARNING("ROM", "Read from unmapped address (byte)");
+                        data.write(0xFF);
+                        ready.write(true);
                     }
+                } else {
+                    uint32_t result = 0;
+                    for (int i = 0; i < 4; ++i) {
+                        uint32_t curr_addr = addresse + i;
+                        if (memory.count(curr_addr)) {
+                            result |= static_cast<uint32_t>(memory[curr_addr]) << (8 * i);
+                        } else {
+                            SC_REPORT_WARNING("ROM", "Read from unmapped address (word)");
+                            result |= 0xFF << (8 * i);
+                        }
+                    }
+                    data.write(result);
+                    printf("ROM found 4B value: 0x%08x at Address 0x%08x.\n", result, addresse);
+                    ready.write(true);
                 }
-                data.write(result);
-                printf("ROM found 4B value: 0x%08x at Address 0x%08x.\n", result, addresse);
-                ready.write(true);
             }
+
         }
     }
 
