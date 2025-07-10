@@ -26,20 +26,14 @@ SC_MODULE(TESTBENCH) {
         controller->r(r);
         controller->w(w);
         controller->wide(wide);
-/*         controller->mem_ready(mem_ready);
-        controller->mem_rdata(mem_rdata);  */
-/*         controller->rom_ready(rom_ready);
-        controller->rom_data(rom_data); */
+
         controller->addr(addr);
         controller->wdata(wdata);
         controller->user(user);
         controller->rdata(rdata);
-/*         controller->mem_addr(mem_addr); */
-/*         controller->mem_wdata(mem_wdata); */
+
         controller->ready(ready);
         controller->error(error);
-/*         controller->mem_r(mem_r);
-        controller->mem_w(mem_w); */
 
         SC_THREAD(run_tests);
     }
@@ -107,7 +101,7 @@ SC_MODULE(TESTBENCH) {
         r.write(0);
         w.write(1);
         wide.write(1);
-        wdata.write(0xA5A5A5A5);
+        wdata.write(0x12345678);
         user.write(2);
         wait(clk.posedge_event());
         wait(ready.posedge_event());
@@ -128,7 +122,7 @@ SC_MODULE(TESTBENCH) {
         r.write(0);
         wait(SC_ZERO_TIME);
 
-        check(rdata.read(), 0xA5A5A5A5);
+        check(rdata.read(), 0x12345678);
 
         
         r.write(0);
@@ -148,15 +142,17 @@ SC_MODULE(TESTBENCH) {
         printf("at least I write all the signals. \n");
         wait(clk.posedge_event());
         printf("Then I start to wait CU finish. \n");
+
+        // TOOD: 问题出现在这里，诸如protection这种函数调用，ready error理应有跳变到1的过程，
+        // 但是测试时发现（可能由于是CU 线程快过tb）这个ready会陷入无限等待，因为ready早已为1。
+        wait(ready.posedge_event());
+
         wait(SC_ZERO_TIME);
         printf("This is a zero time so that the ready-signal is correctly setten. \n");
 
-/*         // TOOD: 问题出现在这里，诸如protection这种函数调用，ready error理应有跳变到1的过程，
-        // 但是测试时发现（可能由于是CU 线程快过tb）这个ready会陷入无限等待，因为ready早已为1。
-        wait(ready.posedge_event());
-        printf("Return value / result should be here. \n"); */
+        printf("Return value / result should be here. \n");
 
-        check(error.read(), true);
+        check(error.read(), false);
 
         r.write(0);
         w.write(0);
@@ -168,13 +164,14 @@ SC_MODULE(TESTBENCH) {
         addr.write(40);
         r.write(1);
         w.write(0);
-        wide.write(0);
+        wide.write(1);
         user.write(2);
         
         wait(clk.posedge_event());
+        wait(ready.posedge_event());
         wait(SC_ZERO_TIME);
 
-        check(error.read(), true);
+        check(rdata.read(), 0x5a345678);
 
         r.write(0);
         w.write(0);
@@ -182,7 +179,7 @@ SC_MODULE(TESTBENCH) {
         printf("but this time only set the r/w to ZERO~ \n");
 
 
-        // TC7: 主存 4B 非对齐写入（应报错）
+        // TC7: 主存 4B 非对齐写入
         std::cout << "\n--- TC7: Write Main Memory (4B, unaligned, expect error) ---" << std::endl;
         addr.write(42); // 非4字节对齐
         r.write(0);

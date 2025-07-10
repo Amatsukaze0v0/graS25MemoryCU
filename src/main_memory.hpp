@@ -5,7 +5,6 @@
 #include <map>
 using namespace sc_core;
 
-#define LATENCY 100
 
 SC_MODULE(MAIN_MEMORY) {
   sc_in<bool> clk, mem_en {"memory_enable"};
@@ -19,20 +18,30 @@ SC_MODULE(MAIN_MEMORY) {
   sc_out<bool> ready {"ready_in_Mem"};
 
   std::map<uint32_t, uint32_t> memory;
+  uint32_t latency; // 以ns表示的主存延迟
 
-  SC_CTOR(MAIN_MEMORY) {
+  SC_HAS_PROCESS(MAIN_MEMORY);
+
+  /**
+   * 主存构造器，接收latency传参作为延迟变量，默认为100ns
+   * @param name systemC模块名
+   * @param latency_ns 主存延迟，以纳秒为单位
+   */
+  MAIN_MEMORY(sc_module_name name, uint32_t latency_ns = 100) : sc_module(name), latency(latency_ns) {
     SC_THREAD(behaviour);
     sensitive << clk.pos();
   }
 
   void behaviour() {
     while(true) {
-      wait(mem_en.posedge_event());
-      if (r.read()) {
-        doRead(w.read());
-      }
-      if (w.read()) {
-        doWrite();
+      wait();
+      if (mem_en.read()){
+        if (r.read()) {
+          doRead(w.read());
+        }
+        if (w.read()) {
+          doWrite();
+        }
       }
     }
   }
@@ -42,7 +51,7 @@ SC_MODULE(MAIN_MEMORY) {
 
     uint32_t result = get(addr.read());
 
-    for(int i = 0; i < LATENCY; i++) {
+    for(int i = 0; i < latency; i++) {
       wait();
     }
 
@@ -56,7 +65,7 @@ SC_MODULE(MAIN_MEMORY) {
     ready.write(false);
     set(addr.read(), wdata.read());
 
-    for(int i = 0; i < LATENCY; i++) {
+    for(int i = 0; i < latency; i++) {
       wait();
     }
 
