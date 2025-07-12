@@ -18,7 +18,6 @@ struct Result run_simulation(
 ) {
     struct Result result = {0, 0};
 
-    // 这里写你自己的仿真逻辑
     sc_time period(10, SC_NS);  // 时钟周期 10ns
 
     sc_clock clk("clk", period);
@@ -127,11 +126,34 @@ struct Result run_simulation(
         }
 
         //这里统一重置信号，mc里面的一些地方可能多余
-        w.write(false);
+        addr.write(0);
+        wdata.write(0);
+        mem_rdata.write(0);
+        rdata.write(0);
+        mem_addr.write(0);
+        mem_wdata.write(0);
+
         r.write(false);
+<<<<<<< HEAD
         mem_r.write(false);
         mem_w.write(false);
+=======
+        w.write(false);
+        wide.write(false);
+        mem_ready.write(false);
+        ready.write(false);
+        error.write(false);
+        mem_r.write(false);
+        mem_w.write(false);
+
+        user.write(0);
+
+>>>>>>> origin/main
     }
+
+    //题目貌似要求要运行那么多周期，那么新问题是周期超了怎么办
+    sc_start((cycles-total_cycles)*period);
+
     if (tf != nullptr) {
         sc_close_vcd_trace_file(tf);
     }

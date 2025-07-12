@@ -42,7 +42,7 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size, uint32_t* ac
 
 int parse_csv_file(const char* filename, struct Request** requests, uint32_t* num_requests);
 
-struct Result run_simulation (
+extern struct Result run_simulation (
     uint32_t cycles,
     const char* tracefile,
     uint32_t latencyRom,
