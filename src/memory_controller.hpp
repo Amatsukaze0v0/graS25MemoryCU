@@ -63,7 +63,11 @@ SC_MODULE(MEMORY_CONTROLLER) {
     {
         //initialisieren
         //这里直接创建期望主程序创建模块时已经检查了romsize
-        
+        // 检查 rom_content 是否为 NULL
+        if (rom_content == NULL) {
+            rom_content = new uint32_t[rom_size / sizeof(uint32_t)]();
+        }
+        printf("ROM size is: %d\n", rom_size);
         rom = new ROM("rom", rom_size, rom_content, rom_size / sizeof(uint32_t), latency_rom);
         rom->read_en(rom_read_en);
         rom->clk(clk);
@@ -262,7 +266,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
         for (uint32_t i = 0; i < num_bytes; ++i) {
             uint32_t byte_addr = adresse + i;
 
-            // ROM 区域允许读，不允许写
+/*             // ROM 区域允许读，不允许写 ---- 不应该在此判断
             if (byte_addr < rom->size()) {
                 if (w.read()) {
                     char buf[128];
@@ -272,7 +276,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 }
                 // Jeder darf ROM lesen
                 continue;
-            }
+            } */
 
             // 超级用户永远拥有权限
             if (benutzer == 0 || benutzer == 255) {

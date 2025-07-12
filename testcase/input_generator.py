@@ -3,7 +3,7 @@ import random
 
 FILENAME = "requests.csv"
 NUM_ROWS = 100 # Number of requests generated
-ADDRESS_MAX = 0x200000 # Max address of the ROM
+ADDRESS_MAX = 32 # Max address of the ROM
 
 
 def generate_random_row():
