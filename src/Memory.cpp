@@ -32,7 +32,7 @@ SC_MODULE(MEMORY) {
     MEMORY(sc_module_name name, uint32_t latency = 0)
             : sc_module(name),latency(latency) {
         mem_ready.initialize(true); // 初始内存应该准备好
-        SC_METHOD(update);
+        SC_THREAD(update);
         sensitive << mem_r << mem_w;
     }
 

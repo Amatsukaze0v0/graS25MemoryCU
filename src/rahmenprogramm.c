@@ -104,18 +104,27 @@ int parse_arguments(int argc, char* argv[], MemConfig *config) {
 }
 
 int parse_number(const char* str, uint32_t* value) {
-    // Transform values Hexdezimal -> Dezimal
-    char* endptr;
-    long val;
-    if(strncmp(str, "0x", 2)==0 || strncmp(str, "0X", 2)==0){
-        val=strtol(str, &endptr, 16);
-    }else{
-        val=strtol(str, &endptr, 10);
+    // 1. 复制并清除结尾换行和空白
+    char clean[256];
+    strncpy(clean, str, sizeof(clean));
+    clean[sizeof(clean) - 1] = '\0';
+
+    // 去除末尾换行/空格
+    size_t len = strlen(clean);
+    while (len > 0 && (clean[len - 1] == '\n' || clean[len - 1] == '\r' || clean[len - 1] == ' ' || clean[len - 1] == '\t')) {
+        clean[--len] = '\0';
     }
-    if (endptr==str || *endptr!='\0' || val<0 || val>UINT32_MAX) {
+
+    // 2. 自动判断进制（0x/0X 前缀 → hex）
+    char* endptr;
+    unsigned long val = strtoul(clean, &endptr, 0);
+
+    // 3. 验证结果是否合法
+    if (endptr == clean || *endptr != '\0' || val > UINT32_MAX) {
         return 1;
     }
-    *value=(uint32_t)val;
+
+    *value = (uint32_t)val;
     return 0;
 }
 
@@ -176,17 +185,52 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
         return 1;
     }
     *num_requests = 0;
-    while(fgets(line, sizeof(line), file) && *num_requests<line_count){
-        char type, wide_char;
-        uint32_t addr, data, user;
-        if (sscanf(line, "%c,%x,%x,%d,%c", &type, &addr, &data, &user, &wide_char)>=4) {
-            (*requests)[*num_requests].addr = addr;
-            (*requests)[*num_requests].data = data;
-            (*requests)[*num_requests].w = (type == 'W' || type == 'w') ? 1 : 0;
-            (*requests)[*num_requests].user = (uint8_t)user;
-            (*requests)[*num_requests].wide = (wide_char == 'T' || wide_char == 't') ? 1 : 0;
-            (*num_requests)++;
+    while(fgets(line, sizeof(line), file) && *num_requests < line_count){
+        char* token;
+        char* rest = line;
+        char* fields[5] = {NULL};
+        int field_count = 0;
+
+        // 分隔5个字段（最多）
+        while ((token = strtok_r(rest, ",", &rest)) && field_count < 5) {
+            // 去掉首尾引号
+            if (token[0] == '"') token++;
+            char* end = token + strlen(token) - 1;
+            if (*end == '"') *end = '\0';
+            fields[field_count++] = token;
         }
+
+        if (field_count < 4) continue; // 不合法的行
+
+        // type (fields[0])
+        (*requests)[*num_requests].w = (fields[0][0] == 'W' || fields[0][0] == 'w') ? 1 : 0;
+
+        // address (fields[1])
+        uint32_t addr;
+        if (parse_number(fields[1], &addr) != 0) continue;
+        (*requests)[*num_requests].addr = addr;
+
+        // data (fields[2]) —— 仅在 write 时使用
+        uint32_t data = 0;
+        if ((*requests)[*num_requests].w) {
+            if (fields[2] == NULL || strlen(fields[2]) == 0) continue;  // write must have data
+            if (parse_number(fields[2], &data) != 0) continue;
+        }
+        (*requests)[*num_requests].data = data;
+
+        // user (fields[3])
+        uint32_t user;
+        if (parse_number(fields[3], &user) != 0) continue;
+        (*requests)[*num_requests].user = (uint8_t)user;
+
+        // wide (fields[4])
+        if (field_count >= 5) {
+            (*requests)[*num_requests].wide = (fields[4][0] == 'T' || fields[4][0] == 't') ? 1 : 0;
+        } else {
+            (*requests)[*num_requests].wide = 0; // 默认非宽模式
+        }
+
+        (*num_requests)++;
     }
     fclose(file);
     return 0;
