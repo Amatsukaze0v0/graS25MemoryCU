@@ -134,10 +134,6 @@ struct Result run_simulation(
         mem_wdata.write(0);
 
         r.write(false);
-<<<<<<< HEAD
-        mem_r.write(false);
-        mem_w.write(false);
-=======
         w.write(false);
         wide.write(false);
         mem_ready.write(false);
@@ -148,7 +144,6 @@ struct Result run_simulation(
 
         user.write(0);
 
->>>>>>> origin/main
     }
 
     //题目貌似要求要运行那么多周期，那么新问题是周期超了怎么办
