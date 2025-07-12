@@ -65,6 +65,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
     std::map<uint32_t,uint8_t> gewalt;
 
     uint32_t block_size;
+    uint32_t rom_size;
     // 消去thread error——定义process函数必须在创建thread前，除非加上这句声明。
     SC_HAS_PROCESS(MEMORY_CONTROLLER);
 
@@ -79,6 +80,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
             rom_content = new uint32_t[rom_size / sizeof(uint32_t)]();
         }
         printf("ROM size is: %d\n", rom_size);
+        this->rom_size = rom_size;
         rom = new ROM("rom", rom_size, rom_content, rom_size / sizeof(uint32_t), latency_rom);
         rom->read_en(rom_read_en);
         rom->clk(clk);
@@ -139,8 +141,9 @@ SC_MODULE(MEMORY_CONTROLLER) {
             //Überprüfung, ob die 4-Byte-ausgerichtete Adresse außerhalb des ROM-Bereichs liegt
             if (wide.read() && rom -> size() < 4 || address > rom->size() - 4) {
                 char buf[128];
-                snprintf(buf, sizeof(buf), "Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
-                SC_REPORT_ERROR("Memory Controller : read", buf);
+                printf("Error without interruption: Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
+                //snprintf(buf, sizeof(buf), "Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
+                //SC_REPORT_ERROR("Memory Controller : read", buf);
                 error.write(1);
                 ready.write(1);
                 return;
@@ -233,7 +236,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 new_data = cleared | inserted;
                 // 写入前停止读取避免冲突
                 mem_r.write(0);
-   
+
                 printf("[CU] new Data value is 0x%08x.\n", new_data);
             } else {
                 printf("[CU] memory write request (4B): addr=0x%08X, wdata=0x%08X, user=%u\n", addr.read(), wdata.read(), user.read());
@@ -274,8 +277,8 @@ SC_MODULE(MEMORY_CONTROLLER) {
 
         ready.write(0);
 
-        for (uint32_t i = 0; i < num_bytes; ++i) {
-            uint32_t byte_addr = adresse + i;
+/*         for (uint32_t i = 0; i < num_bytes; ++i) {
+            uint32_t byte_addr = adresse + i; */
 
 /*             // ROM 区域允许读，不允许写 ---- 不应该在此判断
             if (byte_addr < rom->size()) {
@@ -291,25 +294,26 @@ SC_MODULE(MEMORY_CONTROLLER) {
 
             // 超级用户永远拥有权限
             if (benutzer == 0 || benutzer == 255) {
-                continue;
+                return true;
             }
 
             // 计算所属 block 的起始地址
-            uint32_t block_addr = (byte_addr / block_size) * block_size;
+            uint32_t block_addr = ( adresse - rom_size) / block_size;
 
             auto it = gewalt.find(block_addr);
             if (it == gewalt.end()) {
                 // 这个 block 还没有 owner，任何人都可以访问
-                continue;
+                return true;
             }
 
             if (it->second != benutzer) {
                 char buf[128];
-                snprintf(buf, sizeof(buf), "User %u hat keine Berechtigung auf Block 0x%08X (Adresse 0x%08X).\n",benutzer, block_addr, byte_addr);
-                SC_REPORT_ERROR("Memory Controller: protection",buf);
+                printf("User %u hat keine Berechtigung auf Block 0x%08X (Adresse 0x%08X).\n",benutzer, block_addr, adresse);
+                //snprintf(buf, sizeof(buf), "User %u hat keine Berechtigung auf Block 0x%08X (Adresse 0x%08X).\n",benutzer, block_addr, byte_addr);
+                //SC_REPORT_ERROR("Memory Controller: protection",buf);
                 return false;
             }
-        }
+        //}
         return true;
     }
 

@@ -27,7 +27,7 @@ struct Result run_simulation(
     sc_signal<uint8_t> user;
 
     MEMORY_CONTROLLER* memory_controller = new MEMORY_CONTROLLER("memory_controller",romSize,romContent,latencyRom,blockSize);
-    MEMORY* memory = new MEMORY("Main_Memory",66);
+    MAIN_MEMORY* memory = new MAIN_MEMORY("Main_Memory", 0);
 
     memory_controller->clk(clk);
     memory_controller->addr(addr);
@@ -46,12 +46,13 @@ struct Result run_simulation(
     memory_controller->mem_w(mem_w);
     memory_controller->user(user);
 
-    memory->mem_rdata(mem_rdata);
-    memory->mem_addr(mem_addr);
-    memory->mem_wdata(mem_wdata);
-    memory->mem_ready(mem_ready);
-    memory->mem_r(mem_r);
-    memory->mem_w(mem_w);
+    memory->clk(clk);
+    memory->rdata(mem_rdata);
+    memory->addr(mem_addr);
+    memory->wdata(mem_wdata);
+    memory->ready(mem_ready);
+    memory->r(mem_r);
+    memory->w(mem_w);
 
     uint32_t total_cycles = 0;
     uint32_t error_count = 0;
@@ -128,15 +129,17 @@ struct Result run_simulation(
         //这里统一重置信号，mc里面的一些地方可能多余
         w.write(false);
         r.write(false);
+        mem_r.write(false);
+        mem_w.write(false);
     }
     if (tf != nullptr) {
         sc_close_vcd_trace_file(tf);
     }
 
     result.cycles = total_cycles;
-            result.errors = error_count;
+    result.errors = error_count;
 
-        return result;
+    return result;
 }
 
 int sc_main(int argc, char* argv[]) {
@@ -181,7 +184,7 @@ int sc_main(int argc, char* argv[]) {
     printf("\n --- Simulation Finished --- \n");
     printf("Cycles: %u\n", result.cycles);
     printf("Errors: %u\n", result.errors);
-
+    
     if(rom_content!=NULL) free(rom_content);
     if(requests!=NULL) free(requests);
     return 0;
