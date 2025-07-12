@@ -1,58 +1,37 @@
-# ---------------------------------------
-# CONFIGURATION BEGIN
-# ---------------------------------------
+# SystemC 安装目录（WSL 下的路径）
+SYSTEMC_HOME ?= $(HOME)/systemc-3.0.1-install
 
-# entry point for the program and target name
-MAIN := src/ControlUnit.cpp
+CXX      := g++
+CC       := gcc
+CXXFLAGS := -std=c++17 -I$(SYSTEMC_HOME)/include -I./src -Wall -O2
+CFLAGS   := -I$(SYSTEMC_HOME)/include -I./src -Wall -O2
+LDFLAGS  := -L$(SYSTEMC_HOME)/lib -lsystemc
 
-# assignment task file
-ASSIGNMENT := src/ControlUnit.cpp src/memory_controller.hpp src/rahmenprogramm.h src/rahmenprogramm.c
+TARGET := main
 
-# target name
-TARGET := ControlUnit
+# 自动收集 src 目录下所有 .cpp 和 .c 文件
+CPP_SRCS := $(wildcard src/*.cpp)
+C_SRCS   := $(wildcard src/*.c)
+OBJS     := $(CPP_SRCS:.cpp=.o) $(C_SRCS:.c=.o)
 
-# Path to your systemc installation
-SCPATH = /home/amatsukaze/gra/workspace/systemc
+# 默认目标
+all: $(TARGET)
 
-# Additional flags for the compiler
-CXXFLAGS := -std=c++14 -I$(SCPATH)/include
-LDFLAGS := -L$(SCPATH)/lib -lsystemc -lm
+# 生成最终可执行文件（链接 C 和 C++ 对象）
+$(TARGET): $(OBJS)
+	$(CXX) $^ -o $@ $(LDFLAGS)
 
-# ---------------------------------------
-# CONFIGURATION END
-# ---------------------------------------
+# 分别编译 .cpp 文件
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Determine if clang or gcc is available
-CXX := $(shell command -v g++ || command -v clang++)
-CC := $(shell command -v gcc || command -v clang)
-ifeq ($(strip $(CXX)),)
-    $(error Neither clang++ nor g++ is available. Exiting.)
-endif
+# 分别编译 .c 文件
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Add rpath except for MacOS
-UNAME_S := $(shell uname -s)
-
-ifneq ($(UNAME_S), Darwin)
-    LDFLAGS += -Wl,-rpath=$(SCPATH)/lib
-endif
-
-# Default to release build for both app and library
-all: debug
-
-# Debug build
-debug: CXXFLAGS += -g
-debug: $(TARGET)
-
-# Release build
-release: CXXFLAGS += -O2
-release: $(TARGET)
-
-# recipe for building the program
-$(TARGET): $(MAIN) $(ASSIGNMENT) 
-	$(CXX) $(CXXFLAGS) -o $@ $(ASSIGNMENT) $(LDFLAGS)
-
-# clean up
+# 清理
+.PHONY: clean
 clean:
-	rm -f $(TARGET)
+	rm -f src/*.o $(TARGET)
 
-.PHONY: all debug release clean
+.PHONY: all

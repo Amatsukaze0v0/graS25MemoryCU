@@ -4,6 +4,17 @@
 #include "main_memory.hpp"
 #include "rom.hpp"
 using namespace sc_core;
+extern struct Result run_simulation(
+    uint32_t cycles,
+    const char* tracefile,
+    uint32_t latencyRom,
+    uint32_t romSize,
+    uint32_t blockSize,
+    uint32_t* romContent,
+    uint32_t rom_content_size,
+    uint32_t numRequests,
+    struct Request* requests
+    );
 
 #ifndef MEMORY_CONTROLLER_H
 #define MEMORY_CONTROLLER_H

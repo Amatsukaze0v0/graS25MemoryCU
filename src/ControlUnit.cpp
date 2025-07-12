@@ -139,10 +139,6 @@ struct Result run_simulation(
         return result;
 }
 
-void connection(){
-    
-}
-
 int sc_main(int argc, char* argv[]) {
     MemConfig config;
     struct Request* requests = NULL;
