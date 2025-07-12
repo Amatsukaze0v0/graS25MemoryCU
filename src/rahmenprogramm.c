@@ -52,7 +52,7 @@ int parse_arguments(int argc, char* argv[], MemConfig *config) {
                 config->cycles=atoi(optarg);
                 break;
             case 't':
-                config->tracefile=atoi(optarg);
+                config->tracefile = optarg;
                 break;
             case 'l':
                 config->latency_rom=atoi(optarg);
@@ -64,7 +64,7 @@ int parse_arguments(int argc, char* argv[], MemConfig *config) {
                 config->block_size=atoi(optarg);
                 break;
             case 'r':
-                config->rom_content_file=atoi(optarg);
+                config->rom_content_file = optarg;
                 break;
             case 'h':
                 print_help(argv[0]);
@@ -115,7 +115,7 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size, uint32_t* ac
         return NULL;
     }
     uint32_t max_entries=rom_size / sizeof(uint32_t);
-    uint32_t* content=calloc(max_entries, sizeof(uint32_t));
+    uint32_t* content = (uint32_t*)calloc(max_entries, sizeof(uint32_t));
     if(!content){
         fclose(file);
         return NULL;
@@ -143,7 +143,7 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
     FILE* file=fopen(filename, "r");
     if(!file){
         fprintf(stderr, "Cannot open CSV file: %s\n", filename);
-        return NULL;
+        return 1;
     }
     char line[256];
     if(!fgets(line, sizeof(line), file)){
@@ -159,7 +159,7 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
     rewind(file);
     fgets(line, sizeof(line), file); // Skip the table head (First row)
     
-    *requests=malloc(line_count * sizeof(struct Request));
+    *requests = (struct Request*)malloc(line_count * sizeof(struct Request));
     if(!*requests){
         fclose(file);
         return 1;
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    if(parse_scv_file(config.inputfile, &requests, &num_requests)!=0){
+    if(parse_csv_file(config.inputfile, &requests, &num_requests)!=0){
         fprintf(stderr, "Error parsing CSV file.\n");
         if(rom_content!=NULL){
             free(rom_content);

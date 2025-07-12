@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 struct Result {
     uint32_t cycles;
     uint32_t errors;
@@ -38,12 +42,6 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size, uint32_t* ac
 
 int parse_csv_file(const char* filename, struct Request** requests, uint32_t* num_requests);
 
-#endif
-
-#ifdef __cplusplus
-extern "C"{
-#endif
-
 struct Result run_simulation (
     uint32_t cycles,
     const char* tracefile,
@@ -55,7 +53,9 @@ struct Result run_simulation (
     uint32_t numRequests,
     struct Request* requests
 );
+
 #ifdef __cplusplus
 }
 #endif
 
+#endif // RAHMENPROGRAMM_H

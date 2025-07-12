@@ -1,11 +1,11 @@
 #include <systemc.h>
-extern "C" {
+
 #include "rahmenprogramm.h"
 #include "memory_controller.hpp"
-}
 
 
-extern "C" struct Result run_simulation(
+
+struct Result run_simulation(
     uint32_t cycles,
     const char* tracefile,
     uint32_t latencyRom,
@@ -55,9 +55,6 @@ extern "C" struct Result run_simulation(
 
     uint32_t total_cycles = 0;
     uint32_t error_count = 0;
-
-
-    
 
     sc_trace_file* tf = nullptr;
     //设置信号文件，这里判断了是否传入信号文件路径，传入了才进行
@@ -131,15 +128,15 @@ extern "C" struct Result run_simulation(
     //这里统一重置信号，mc里面的一些地方可能多余
     w.write(false);
     r.write(false);
-}
+    }
     if (tf != nullptr) {
         sc_close_vcd_trace_file(tf);
     }
 
-result.cycles = total_cycles;
-        result.errors = error_count;
+    result.cycles = total_cycles;
+            result.errors = error_count;
 
-    return result;
+        return result;
 }
 
 void connection(){
@@ -147,6 +144,49 @@ void connection(){
 }
 
 int sc_main(int argc, char* argv[]) {
-    std::cout << "ERROR" << std::endl;
-    return 1;
+    MemConfig config;
+    struct Request* requests = NULL;
+    uint32_t num_requests = 0;
+    uint32_t* rom_content = NULL;
+    uint32_t rom_content_size = 0;
+
+    if(parse_arguments(argc, argv, &config)!=0){
+        return 1;
+    }
+
+    if(config.rom_content_file!=NULL){
+        rom_content = load_rom_content(config.rom_content_file, config.rom_size, &rom_content_size);
+        if(rom_content==NULL){
+            fprintf(stderr, "Error loading ROM content.\n");
+            return EXIT_FAILURE;
+        }
+    }
+
+    if(parse_csv_file(config.inputfile, &requests, &num_requests)!=0){
+        fprintf(stderr, "Error parsing CSV file.\n");
+        if(rom_content!=NULL){
+            free(rom_content);
+        }
+        return EXIT_FAILURE;
+    }
+
+    struct Result result = run_simulation(
+        config.cycles,
+        config.tracefile,
+        config.latency_rom,
+        config.rom_size,
+        config.block_size,
+        rom_content,
+        rom_content_size,
+        num_requests,
+        requests
+    );
+
+    printf("\n --- Simulation Finished --- \n");
+    printf("Cycles: \n");
+    printf("Errors: \n");
+
+    if(rom_content!=NULL) free(rom_content);
+    if(requests!=NULL) free(requests);
+    return 0;
 }

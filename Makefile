@@ -3,13 +3,13 @@
 # ---------------------------------------
 
 # entry point for the program and target name
-MAIN := src/test_cu.cpp
+MAIN := src/ControlUnit.cpp
 
 # assignment task file
-ASSIGNMENT := src/test_cu.cpp src/rom.hpp src/main_memory.hpp
+ASSIGNMENT := src/ControlUnit.cpp src/memory_controller.hpp src/rahmenprogramm.h src/rahmenprogramm.c
 
 # target name
-TARGET := test_cu
+TARGET := ControlUnit
 
 # Path to your systemc installation
 SCPATH = /home/amatsukaze/gra/workspace/systemc
@@ -49,7 +49,7 @@ release: $(TARGET)
 
 # recipe for building the program
 $(TARGET): $(MAIN) $(ASSIGNMENT) 
-	$(CXX) $(CXXFLAGS) -o $@ $(MAIN) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $(ASSIGNMENT) $(LDFLAGS)
 
 # clean up
 clean:
