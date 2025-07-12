@@ -15,8 +15,6 @@ SC_MODULE(ROM) {
     sc_out<uint32_t> data;
     std::map<uint32_t, uint8_t> memory;
     uint32_t latency;
-    //事件触发规则参考https://www.learnsystemc.com/basic/event
-    sc_event start_read;
 
     SC_HAS_PROCESS(ROM);
 
@@ -34,15 +32,8 @@ SC_MODULE(ROM) {
         uint32_t i = 0; // byte index in memory
         uint32_t j = 0; // word index in rom_content
         
-        // 计算需要的字节数 (rom_content_size * 4), 无需判断大小问题，已由RP处理
-        uint32_t required_size = rom_content_size * 4;
-/*         if (required_size > size) {
-            SC_REPORT_ERROR("ROM", "ROM content size is bigger than storage size! Failed to initialize ROM.");
-            exit(1);
-        } */
-        
-        // 复制内容
-        for (j = 0; j < rom_content_size; ++j) {
+        //Korpieren die Inhalte auf memory
+        for (; j < rom_content_size; ++j) {
             uint32_t word = rom_content[j];
             for (int k = 0; k < 4; ++k) {
                 memory[i++] = (word >> (k * 8)) & 0xFF;
@@ -50,7 +41,7 @@ SC_MODULE(ROM) {
             printf("ROM writing value: 0x%08x on Address 0x%08x. \n", word, j * 4);
         }
         
-        // 用0填充剩余空间
+        //Füllen weitere Räume mit 0
         for (; i < size; ++i) {
             memory[i] = 0;
         }
