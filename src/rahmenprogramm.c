@@ -8,6 +8,17 @@
 #define DEFAULT_LATENCY_ROM 1
 #define DEFAULT_ROM_SIZE 0x100000
 #define DEFAULT_BLOCK_SIZE 0x1000 // Both examples from pdf data
+extern struct Result run_simulation(
+    uint32_t cycles,
+    const char* tracefile,
+    uint32_t latencyRom,
+    uint32_t romSize,
+    uint32_t blockSize,
+    uint32_t* romContent,
+    uint32_t rom_content_size,
+    uint32_t numRequests,
+    struct Request* requests
+    );
 
 void print_help(const char* prog_name) {
     fprintf(stderr, "Usage: %s [options] <input_file>\n\n", prog_name);
