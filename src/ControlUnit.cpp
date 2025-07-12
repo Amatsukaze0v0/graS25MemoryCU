@@ -18,7 +18,6 @@ struct Result run_simulation(
 ) {
     struct Result result = {0, 0};
 
-    // 这里写你自己的仿真逻辑
     sc_time period(10, SC_NS);  // 时钟周期 10ns
 
     sc_clock clk("clk", period);
@@ -126,63 +125,40 @@ struct Result run_simulation(
         }
 
         //这里统一重置信号，mc里面的一些地方可能多余
-        w.write(false);
+        addr.write(0);
+        wdata.write(0);
+        mem_rdata.write(0);
+        rdata.write(0);
+        mem_addr.write(0);
+        mem_wdata.write(0);
+
         r.write(false);
+        w.write(false);
+        wide.write(false);
+        mem_ready.write(false);
+        ready.write(false);
+        error.write(false);
+        mem_r.write(false);
+        mem_w.write(false);
+
+        user.write(0);
+
     }
+
+    //题目貌似要求要运行那么多周期，那么新问题是周期超了怎么办
+    sc_start((cycles-total_cycles)*period);
+
     if (tf != nullptr) {
         sc_close_vcd_trace_file(tf);
     }
 
     result.cycles = total_cycles;
-            result.errors = error_count;
+    result.errors = error_count;
 
-        return result;
+    return result;
 }
 
 int sc_main(int argc, char* argv[]) {
-    MemConfig config;
-    struct Request* requests = NULL;
-    uint32_t num_requests = 0;
-    uint32_t* rom_content = NULL;
-    uint32_t rom_content_size = 0;
-
-    if(parse_arguments(argc, argv, &config)!=0){
-        return 1;
-    }
-
-    if(config.rom_content_file!=NULL){
-        rom_content = load_rom_content(config.rom_content_file, config.rom_size, &rom_content_size);
-        if(rom_content==NULL){
-            fprintf(stderr, "Error loading ROM content.\n");
-            return EXIT_FAILURE;
-        }
-    }
-
-    if(parse_csv_file(config.inputfile, &requests, &num_requests)!=0){
-        fprintf(stderr, "Error parsing CSV file.\n");
-        if(rom_content!=NULL){
-            free(rom_content);
-        }
-        return EXIT_FAILURE;
-    }
-
-    struct Result result = run_simulation(
-        config.cycles,
-        config.tracefile,
-        config.latency_rom,
-        config.rom_size,
-        config.block_size,
-        rom_content,
-        rom_content_size,
-        num_requests,
-        requests
-    );
-
-    printf("\n --- Simulation Finished --- \n");
-    printf("Cycles: %u\n", result.cycles);
-    printf("Errors: %u\n", result.errors);
-
-    if(rom_content!=NULL) free(rom_content);
-    if(requests!=NULL) free(requests);
-    return 0;
+    std::cout << "ERROR" << std::endl;
+    return 1;
 }
