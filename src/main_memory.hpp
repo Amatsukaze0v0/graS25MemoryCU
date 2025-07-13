@@ -36,12 +36,12 @@ SC_MODULE(MAIN_MEMORY) {
     while(true) {
       wait();
       
-        if (r.read()) {
-          doRead(w.read());
-        }
-        if (w.read()) {
-          doWrite();
-        }
+      if (r.read()) {
+        doRead(w.read());
+      }
+      if (w.read()) {
+        doWrite();
+      }
       
     }
   }
@@ -82,7 +82,7 @@ SC_MODULE(MAIN_MEMORY) {
       }
       result |= value << (i * 8);
     }
-    //printf("[MEM] Value got from memory as 0x%08x at address 0x%08x. \n", result, address);
+    printf("[MEM] Value got from memory as 0x%08x at address 0x%08x. \n", result, address);
     return result;
   }
 

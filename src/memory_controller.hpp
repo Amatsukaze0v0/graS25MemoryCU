@@ -205,12 +205,13 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 printf("[CU] memory write request (1B): addr=0x%08X, wdata=0x%02X, user=%u\n", addr.read(), wdata.read() & 0xFF, user.read());
                 mem_addr.write(addr);
                 mem_r.write(1);
-
                 // 等待读取返回结果
                 printf("[CU] wait for mem_ready.posedge_event() ...\n");
                 wait(mem_ready.posedge_event());           
                 wait(SC_ZERO_TIME);
-
+                // 写入前停止读取避免冲突
+                mem_r.write(0);
+                wait(SC_ZERO_TIME);
                 // 赋值
                 uint32_t prev_data = mem_rdata.read();
                 printf("[CU] got raw_data at address 0x%08x with value 0x%08x.\n", addr.read(), prev_data);
@@ -223,8 +224,6 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 uint32_t inserted = low_8bits << (offset * 8);
                 // 合并为待写入新的值
                 new_data = cleared | inserted;
-                // 写入前停止读取避免冲突
-                mem_r.write(0);
 
                 printf("[CU] new Data value is 0x%08x.\n", new_data);
             } else {
@@ -238,7 +237,12 @@ SC_MODULE(MEMORY_CONTROLLER) {
             wait(SC_ZERO_TIME);
             // 等待写入完成
             printf("[CU] wait for mem_ready.posedge_event() ...\n");
-            wait(mem_ready.posedge_event());
+            do {
+                wait(clk.posedge_event());
+            } while (!mem_ready.read());  
+            wait(SC_ZERO_TIME);
+            mem_w.write(0);
+            
             printf("[CU] memory write done: addr=0x%08X, wdata=0x%08X\n", addr.read(), new_data);
             //Benutzer mit Adresse verknüpfen
             if (user.read() != 0 && user.read() != 255) {
@@ -248,6 +252,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 uint32_t block_addr = (addr.read() / block_size) * block_size;
                 gewalt.erase(block_addr);
             }
+
             ready.write(1);
         } else {
             // ROM 禁止写入

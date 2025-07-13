@@ -88,6 +88,8 @@ struct Result run_simulation(
 
         sc_trace(tf, user, "user");
 
+        sc_trace(tf, memory->ready, "Memory_ready_signal");
+
         std::cout << "[TRACE] Tracing enabled: " << tfname << ".vcd\n";
     }
     for (std::size_t i = 0; i < numRequests; ++i) {
