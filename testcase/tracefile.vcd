@@ -1,5 +1,5 @@
 $date
-     Jul 13, 2025       19:57:54
+     Jul 13, 2025       20:13:52
 $end
 
 $version
@@ -37,21 +37,21 @@ $end
 
 $dumpvars
 1aaaaa
-b1011 aaaab
-b11001111 aaaac
+b10010000 aaaab
+b10010001101001010101111001101 aaaac
 b0 aaaad
 b0 aaaae
-b0 aaaaf
-b0 aaaag
+b10010000 aaaaf
+b10010001101001010101111001101 aaaag
 0aaaah
 1aaaai
-0aaaaj
+1aaaaj
 0aaaak
-1aaaal
+0aaaal
 0aaaam
 0aaaan
-0aaaao
-b10111000 aaaap
+1aaaao
+b101010 aaaap
 0aaaaq
 $end
 
@@ -60,204 +60,188 @@ $end
 
 #10000
 1aaaaa
-b1 aaaab
-b11100100100100010011100101001110 aaaac
-1aaaaj
-b11101000 aaaap
+1aaaak
+1aaaaq
 
 #15000
 0aaaaa
 
 #20000
 1aaaaa
-b10000 aaaab
-b0 aaaac
-1aaaah
-0aaaai
-0aaaaj
-0aaaal
-b10111 aaaap
+1aaaal
+0aaaao
 
 #25000
 0aaaaa
 
 #30000
 1aaaaa
-
-#31000
-b101111 aaaad
-1aaaal
+b10100101 aaaab
+b11011110101011011011111011101111 aaaac
+b0 aaaaf
+b0 aaaag
+0aaaaj
+0aaaak
+1aaaam
+b11001000 aaaap
+0aaaaq
 
 #35000
 0aaaaa
 
 #40000
 1aaaaa
-b11111 aaaab
-b11001110101010000000000110111101 aaaac
-b0 aaaad
-0aaaah
-1aaaai
+b11111111 aaaab
+b10011000011101100101010000110010 aaaac
 1aaaaj
-b11110110 aaaap
+b10000000 aaaap
 
 #45000
 0aaaaa
 
 #50000
 1aaaaa
-b1001 aaaab
-b10101000000110001101010000111101 aaaac
-b11111111 aaaap
+b10010000 aaaab
+b0 aaaac
+b10010000 aaaaf
+1aaaah
+0aaaai
+0aaaal
+0aaaam
+1aaaan
+b101010 aaaap
 
 #55000
 0aaaaa
 
 #60000
 1aaaaa
-b1011010110000111000001101000000 aaaac
-b1110110 aaaap
+b10010001101001010101111001101 aaaad
+b10010001101001010101111001101 aaaae
+1aaaak
+1aaaal
+1aaaaq
 
 #65000
 0aaaaa
 
 #70000
 1aaaaa
-b10011 aaaab
-b0 aaaac
-1aaaah
-0aaaai
-0aaaal
-b11111111 aaaap
+b10100101 aaaab
+b0 aaaad
+b0 aaaae
+b0 aaaaf
+0aaaaj
+0aaaak
+1aaaam
+0aaaan
+b11001000 aaaap
+0aaaaq
 
 #75000
 0aaaaa
 
 #80000
 1aaaaa
-
-#81000
-b11110000001000000111111111010111 aaaad
-1aaaal
+b11111111 aaaab
+1aaaaj
+b10000000 aaaap
 
 #85000
 0aaaaa
 
 #90000
 1aaaaa
-b111 aaaab
-b11110110001001100111000100000010 aaaac
-b0 aaaad
+b1111111111111111 aaaab
+b1001000110100 aaaac
+b1111111111111111 aaaaf
+b1001000110100 aaaag
 0aaaah
 1aaaai
-b10111000 aaaap
+0aaaal
+0aaaam
+1aaaao
+b11000 aaaap
 
 #95000
 0aaaaa
 
 #100000
 1aaaaa
-b1001 aaaab
-b1110100011101111111110010100011 aaaac
-b10111101 aaaap
+1aaaak
+1aaaaq
 
 #105000
 0aaaaa
 
 #110000
 1aaaaa
-b1111 aaaab
-b11010111110011000111000011100001 aaaac
-b11001011 aaaap
+1aaaal
+0aaaao
 
 #115000
 0aaaaa
 
 #120000
 1aaaaa
-b11000 aaaab
-b1101111 aaaac
+b0 aaaab
+b0 aaaac
+b0 aaaaf
+b0 aaaag
+0aaaai
 0aaaaj
-b101000 aaaap
+0aaaak
+0aaaal
+b0 aaaap
+0aaaaq
 
 #125000
 0aaaaa
 
 #130000
 1aaaaa
-b10110 aaaab
-b10000001011100111011111001011000 aaaac
-1aaaaj
-b100111 aaaap
 
 #135000
 0aaaaa
 
 #140000
 1aaaaa
-b1010 aaaab
-b10001011 aaaac
-0aaaaj
-b110101 aaaap
 
 #145000
 0aaaaa
 
 #150000
 1aaaaa
-b11011 aaaab
-b10001011001000101110000101100 aaaac
-1aaaaj
-b11011000 aaaap
 
 #155000
 0aaaaa
 
 #160000
 1aaaaa
-b1010 aaaab
-b1000100110011101111001110101011 aaaac
-b100110 aaaap
 
 #165000
 0aaaaa
 
 #170000
 1aaaaa
-b11010 aaaab
-b11000110100001000011110101000000 aaaac
-b11101100 aaaap
 
 #175000
 0aaaaa
 
 #180000
 1aaaaa
-b1010 aaaab
-b1111010111101100011001111101 aaaac
-b111111 aaaap
 
 #185000
 0aaaaa
 
 #190000
 1aaaaa
-b11000 aaaab
-b100011 aaaac
-0aaaaj
-b10011010 aaaap
 
 #195000
 0aaaaa
 
 #200000
 1aaaaa
-b1110 aaaab
-b0 aaaac
-1aaaah
-0aaaai
-0aaaal
-b100100 aaaap
 
 #205000
 0aaaaa
@@ -265,19 +249,11 @@ b100100 aaaap
 #210000
 1aaaaa
 
-#211000
-b11110100 aaaad
-1aaaal
-
 #215000
 0aaaaa
 
 #220000
 1aaaaa
-b11 aaaab
-b0 aaaad
-0aaaal
-b1110011 aaaap
 
 #225000
 0aaaaa
@@ -285,20 +261,11 @@ b1110011 aaaap
 #230000
 1aaaaa
 
-#231000
-b10011 aaaad
-1aaaal
-
 #235000
 0aaaaa
 
 #240000
 1aaaaa
-b110 aaaab
-b0 aaaad
-1aaaaj
-0aaaal
-b10 aaaap
 
 #245000
 0aaaaa
@@ -306,43 +273,23 @@ b10 aaaap
 #250000
 1aaaaa
 
-#251000
-b11111011111001111000001110000110 aaaad
-1aaaal
-
 #255000
 0aaaaa
 
 #260000
 1aaaaa
-b11101 aaaab
-b1100110 aaaac
-b0 aaaad
-0aaaah
-1aaaai
-0aaaaj
-b1011010 aaaap
 
 #265000
 0aaaaa
 
 #270000
 1aaaaa
-b10 aaaab
-b11000111 aaaac
-b11001111 aaaap
 
 #275000
 0aaaaa
 
 #280000
 1aaaaa
-b1010 aaaab
-b0 aaaac
-1aaaah
-0aaaai
-0aaaal
-b11100 aaaap
 
 #285000
 0aaaaa
@@ -350,44 +297,23 @@ b11100 aaaap
 #290000
 1aaaaa
 
-#291000
-b1110111 aaaad
-1aaaal
-
 #295000
 0aaaaa
 
 #300000
 1aaaaa
-b1011 aaaab
-b1001000 aaaac
-b0 aaaad
-0aaaah
-1aaaai
-b11100111 aaaap
 
 #305000
 0aaaaa
 
 #310000
 1aaaaa
-b10110 aaaab
-b1111100110100010000010101001100 aaaac
-1aaaaj
-b10001 aaaap
 
 #315000
 0aaaaa
 
 #320000
 1aaaaa
-b11100 aaaab
-b0 aaaac
-1aaaah
-0aaaai
-0aaaaj
-0aaaal
-b10011 aaaap
 
 #325000
 0aaaaa
@@ -395,19 +321,11 @@ b10011 aaaap
 #330000
 1aaaaa
 
-#331000
-b10111110 aaaad
-1aaaal
-
 #335000
 0aaaaa
 
 #340000
 1aaaaa
-b1001 aaaab
-b0 aaaad
-0aaaal
-b11111001 aaaap
 
 #345000
 0aaaaa
@@ -415,84 +333,53 @@ b11111001 aaaap
 #350000
 1aaaaa
 
-#351000
-b11111011 aaaad
-1aaaal
-
 #355000
 0aaaaa
 
 #360000
 1aaaaa
-b11110 aaaab
-b100111001001001100100010111100 aaaac
-b0 aaaad
-0aaaah
-1aaaai
-1aaaaj
-b10111010 aaaap
 
 #365000
 0aaaaa
 
 #370000
 1aaaaa
-b101 aaaab
-b110011 aaaac
-0aaaaj
-b100010 aaaap
 
 #375000
 0aaaaa
 
 #380000
 1aaaaa
-b111 aaaab
-b1011000 aaaac
-b10000001 aaaap
 
 #385000
 0aaaaa
 
 #390000
 1aaaaa
-b100000 aaaab
-b1110010 aaaac
-b1001011 aaaap
 
 #395000
 0aaaaa
 
 #400000
 1aaaaa
-b1110011 aaaac
-1aaaaj
 
 #405000
 0aaaaa
 
 #410000
 1aaaaa
-b10010001101000101011001111000 aaaac
 
 #415000
 0aaaaa
 
 #420000
 1aaaaa
-b1110100 aaaac
-0aaaaj
 
 #425000
 0aaaaa
 
 #430000
 1aaaaa
-b0 aaaab
-b0 aaaac
-0aaaai
-0aaaal
-b0 aaaap
 
 #435000
 0aaaaa

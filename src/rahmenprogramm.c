@@ -123,6 +123,11 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
         fprintf(stderr, "Cannot open ROM-content file: %s\n", filename);
         return NULL;
     }
+    if (rom_size % 2 != 0) {
+        fprintf(stderr, "Error: ROM size must be power of 2!\n");
+        fclose(file);
+        return NULL;
+    }
     uint32_t max_entries = rom_size / 4;
     uint32_t* content = (uint32_t*)calloc(max_entries, sizeof(uint32_t));
     if(!content){
