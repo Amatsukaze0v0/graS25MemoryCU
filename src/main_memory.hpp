@@ -7,7 +7,7 @@ using namespace sc_core;
 
 
 SC_MODULE(MAIN_MEMORY) {
-  sc_in<bool> clk, mem_en {"memory_enable"};
+  sc_in<bool> clk;
 
   sc_in<uint32_t> addr;
   sc_in<uint32_t> wdata;
@@ -35,14 +35,14 @@ SC_MODULE(MAIN_MEMORY) {
   void behaviour() {
     while(true) {
       wait();
-      if (mem_en.read()){
-        if (r.read()) {
-          doRead(w.read());
-        }
-        if (w.read()) {
-          doWrite();
-        }
+      
+      if (r.read()) {
+        doRead(w.read());
       }
+      if (w.read()) {
+        doWrite();
+      }
+      
     }
   }
 

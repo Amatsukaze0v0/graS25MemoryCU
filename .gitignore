@@ -2,3 +2,4 @@
 /.vscode
 Makefile
 ControlUnit
+/testcase/tracefile.txt.vcd

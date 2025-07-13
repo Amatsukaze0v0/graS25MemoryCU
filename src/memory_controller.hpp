@@ -54,6 +54,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
     std::map<uint32_t,uint8_t> gewalt;
 
     uint32_t block_size;
+    uint32_t rom_size;
     // 消去thread error——定义process函数必须在创建thread前，除非加上这句声明。
     SC_HAS_PROCESS(MEMORY_CONTROLLER);
 
@@ -68,6 +69,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
             rom_content = new uint32_t[rom_size / sizeof(uint32_t)]();
         }
         printf("ROM size is: %d\n", rom_size);
+        this->rom_size = rom_size;
         rom = new ROM("rom", rom_size, rom_content, rom_size / sizeof(uint32_t), latency_rom);
         rom->read_en(rom_read_en);
         rom->clk(clk);
@@ -128,8 +130,9 @@ SC_MODULE(MEMORY_CONTROLLER) {
             //Überprüfung, ob die 4-Byte-ausgerichtete Adresse außerhalb des ROM-Bereichs liegt
             if (wide.read() && rom -> size() < 4 || address > rom->size() - 4) {
                 char buf[128];
-                snprintf(buf, sizeof(buf), "Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
-                SC_REPORT_ERROR("Memory Controller : read", buf);
+                printf("Error without interruption: Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
+                //snprintf(buf, sizeof(buf), "Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
+                //SC_REPORT_ERROR("Memory Controller : read", buf);
                 error.write(1);
                 ready.write(1);
                 return;
@@ -202,12 +205,13 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 printf("[CU] memory write request (1B): addr=0x%08X, wdata=0x%02X, user=%u\n", addr.read(), wdata.read() & 0xFF, user.read());
                 mem_addr.write(addr);
                 mem_r.write(1);
-
                 // 等待读取返回结果
                 printf("[CU] wait for mem_ready.posedge_event() ...\n");
                 wait(mem_ready.posedge_event());           
                 wait(SC_ZERO_TIME);
-
+                // 写入前停止读取避免冲突
+                mem_r.write(0);
+                wait(SC_ZERO_TIME);
                 // 赋值
                 uint32_t prev_data = mem_rdata.read();
                 printf("[CU] got raw_data at address 0x%08x with value 0x%08x.\n", addr.read(), prev_data);
@@ -220,9 +224,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 uint32_t inserted = low_8bits << (offset * 8);
                 // 合并为待写入新的值
                 new_data = cleared | inserted;
-                // 写入前停止读取避免冲突
-                mem_r.write(0);
-   
+
                 printf("[CU] new Data value is 0x%08x.\n", new_data);
             } else {
                 printf("[CU] memory write request (4B): addr=0x%08X, wdata=0x%08X, user=%u\n", addr.read(), wdata.read(), user.read());
@@ -235,7 +237,12 @@ SC_MODULE(MEMORY_CONTROLLER) {
             wait(SC_ZERO_TIME);
             // 等待写入完成
             printf("[CU] wait for mem_ready.posedge_event() ...\n");
-            wait(mem_ready.posedge_event());
+            do {
+                wait(clk.posedge_event());
+            } while (!mem_ready.read());  
+            wait(SC_ZERO_TIME);
+            mem_w.write(0);
+            
             printf("[CU] memory write done: addr=0x%08X, wdata=0x%08X\n", addr.read(), new_data);
             //Benutzer mit Adresse verknüpfen
             if (user.read() != 0 && user.read() != 255) {
@@ -245,6 +252,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
                 uint32_t block_addr = (addr.read() / block_size) * block_size;
                 gewalt.erase(block_addr);
             }
+
             ready.write(1);
         } else {
             // ROM 禁止写入
@@ -263,8 +271,8 @@ SC_MODULE(MEMORY_CONTROLLER) {
 
         ready.write(0);
 
-        for (uint32_t i = 0; i < num_bytes; ++i) {
-            uint32_t byte_addr = adresse + i;
+/*         for (uint32_t i = 0; i < num_bytes; ++i) {
+            uint32_t byte_addr = adresse + i; */
 
 /*             // ROM 区域允许读，不允许写 ---- 不应该在此判断
             if (byte_addr < rom->size()) {
@@ -280,25 +288,26 @@ SC_MODULE(MEMORY_CONTROLLER) {
 
             // 超级用户永远拥有权限
             if (benutzer == 0 || benutzer == 255) {
-                continue;
+                return true;
             }
 
             // 计算所属 block 的起始地址
-            uint32_t block_addr = (byte_addr / block_size) * block_size;
+            uint32_t block_addr = ( adresse - rom_size) / block_size;
 
             auto it = gewalt.find(block_addr);
             if (it == gewalt.end()) {
                 // 这个 block 还没有 owner，任何人都可以访问
-                continue;
+                return true;
             }
 
             if (it->second != benutzer) {
                 char buf[128];
-                snprintf(buf, sizeof(buf), "User %u hat keine Berechtigung auf Block 0x%08X (Adresse 0x%08X).\n",benutzer, block_addr, byte_addr);
-                SC_REPORT_ERROR("Memory Controller: protection",buf);
+                printf("User %u hat keine Berechtigung auf Block 0x%08X (Adresse 0x%08X).\n",benutzer, block_addr, adresse);
+                //snprintf(buf, sizeof(buf), "User %u hat keine Berechtigung auf Block 0x%08X (Adresse 0x%08X).\n",benutzer, block_addr, byte_addr);
+                //SC_REPORT_ERROR("Memory Controller: protection",buf);
                 return false;
             }
-        }
+        //}
         return true;
     }
 

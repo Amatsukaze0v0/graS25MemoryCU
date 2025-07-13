@@ -26,7 +26,7 @@ struct Result run_simulation(
     sc_signal<uint8_t> user;
 
     MEMORY_CONTROLLER* memory_controller = new MEMORY_CONTROLLER("memory_controller",romSize,romContent,latencyRom,blockSize);
-    MEMORY* memory = new MEMORY("Main_Memory",66);
+    MAIN_MEMORY* memory = new MAIN_MEMORY("Main_Memory", 0);
 
     memory_controller->clk(clk);
     memory_controller->addr(addr);
@@ -45,12 +45,13 @@ struct Result run_simulation(
     memory_controller->mem_w(mem_w);
     memory_controller->user(user);
 
-    memory->mem_rdata(mem_rdata);
-    memory->mem_addr(mem_addr);
-    memory->mem_wdata(mem_wdata);
-    memory->mem_ready(mem_ready);
-    memory->mem_r(mem_r);
-    memory->mem_w(mem_w);
+    memory->clk(clk);
+    memory->rdata(mem_rdata);
+    memory->addr(mem_addr);
+    memory->wdata(mem_wdata);
+    memory->ready(mem_ready);
+    memory->r(mem_r);
+    memory->w(mem_w);
 
     uint32_t total_cycles = 0;
     uint32_t error_count = 0;
@@ -86,6 +87,8 @@ struct Result run_simulation(
         sc_trace(tf, mem_w, "mem_w");
 
         sc_trace(tf, user, "user");
+
+        sc_trace(tf, memory->ready, "Memory_ready_signal");
 
         std::cout << "[TRACE] Tracing enabled: " << tfname << ".vcd\n";
     }
@@ -159,6 +162,49 @@ struct Result run_simulation(
 }
 
 int sc_main(int argc, char* argv[]) {
-    std::cout << "ERROR" << std::endl;
-    return 1;
+    MemConfig config;
+    struct Request* requests = NULL;
+    uint32_t num_requests = 0;
+    uint32_t* rom_content = NULL;
+    uint32_t rom_content_size = 0;
+
+    if(parse_arguments(argc, argv, &config)!=0){
+        return 1;
+    }
+
+    if(config.rom_content_file!=NULL){
+        rom_content = load_rom_content(config.rom_content_file, config.rom_size, &rom_content_size);
+        if(rom_content==NULL){
+            fprintf(stderr, "Error loading ROM content.\n");
+            return EXIT_FAILURE;
+        }
+    }
+
+    if(parse_csv_file(config.inputfile, &requests, &num_requests)!=0){
+        fprintf(stderr, "Error parsing CSV file.\n");
+        if(rom_content!=NULL){
+            free(rom_content);
+        }
+        return EXIT_FAILURE;
+    }
+
+    struct Result result = run_simulation(
+        config.cycles,
+        config.tracefile,
+        config.latency_rom,
+        config.rom_size,
+        config.block_size,
+        rom_content,
+        rom_content_size,
+        num_requests,
+        requests
+    );
+
+    printf("\n --- Simulation Finished --- \n");
+    printf("Cycles: %u\n", result.cycles);
+    printf("Errors: %u\n", result.errors);
+    
+    if(rom_content!=NULL) free(rom_content);
+    if(requests!=NULL) free(requests);
+    return 0;
 }
