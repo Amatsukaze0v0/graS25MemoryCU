@@ -38,7 +38,7 @@ int parse_arguments(int argc, char* argv[], MemConfig *config);
 
 int parse_number(const char* str, uint32_t* value);
 
-uint32_t* load_rom_content(const char* filename, uint32_t rom_size, uint32_t* actual_size);
+uint32_t* load_rom_content(const char* filename, uint32_t rom_size);
 
 int parse_csv_file(const char* filename, struct Request** requests, uint32_t* num_requests);
 
@@ -49,7 +49,6 @@ extern struct Result run_simulation (
     uint32_t romSize,
     uint32_t blockSize,
     uint32_t* romContent,
-    uint32_t rom_content_size,
     uint32_t numRequests,
     struct Request* requests
 );

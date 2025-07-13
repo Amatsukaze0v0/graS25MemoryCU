@@ -70,7 +70,7 @@ SC_MODULE(MEMORY_CONTROLLER) {
         }
         printf("ROM size is: %d\n", rom_size);
         this->rom_size = rom_size;
-        rom = new ROM("rom", rom_size, rom_content, rom_size / sizeof(uint32_t), latency_rom);
+        rom = new ROM("rom", rom_size, rom_content,latency_rom);
         rom->read_en(rom_read_en);
         rom->clk(clk);
         rom->addr(rom_addr_sig);

@@ -12,7 +12,6 @@ struct Result run_simulation(
     uint32_t romSize,
     uint32_t blockSize,
     uint32_t* romContent,
-    uint32_t rom_content_size,
     uint32_t numRequests,
     struct Request* requests
 ) {
@@ -162,49 +161,6 @@ struct Result run_simulation(
 }
 
 int sc_main(int argc, char* argv[]) {
-    MemConfig config;
-    struct Request* requests = NULL;
-    uint32_t num_requests = 0;
-    uint32_t* rom_content = NULL;
-    uint32_t rom_content_size = 0;
-
-    if(parse_arguments(argc, argv, &config)!=0){
-        return 1;
-    }
-
-    if(config.rom_content_file!=NULL){
-        rom_content = load_rom_content(config.rom_content_file, config.rom_size, &rom_content_size);
-        if(rom_content==NULL){
-            fprintf(stderr, "Error loading ROM content.\n");
-            return EXIT_FAILURE;
-        }
-    }
-
-    if(parse_csv_file(config.inputfile, &requests, &num_requests)!=0){
-        fprintf(stderr, "Error parsing CSV file.\n");
-        if(rom_content!=NULL){
-            free(rom_content);
-        }
-        return EXIT_FAILURE;
-    }
-
-    struct Result result = run_simulation(
-        config.cycles,
-        config.tracefile,
-        config.latency_rom,
-        config.rom_size,
-        config.block_size,
-        rom_content,
-        rom_content_size,
-        num_requests,
-        requests
-    );
-
-    printf("\n --- Simulation Finished --- \n");
-    printf("Cycles: %u\n", result.cycles);
-    printf("Errors: %u\n", result.errors);
-    
-    if(rom_content!=NULL) free(rom_content);
-    if(requests!=NULL) free(requests);
-    return 0;
+    std::cout << "ERROR" << std::endl;
+    return 1;
 }

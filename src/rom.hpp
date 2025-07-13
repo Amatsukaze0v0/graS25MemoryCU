@@ -26,18 +26,23 @@ SC_MODULE(ROM) {
      * @param rom_content 数组指针，指向初始化数组
      * 
      */
-    ROM(sc_module_name name, uint32_t size, uint32_t* rom_content, uint32_t rom_content_size, uint32_t latency)
+    ROM(sc_module_name name, uint32_t size, uint32_t* rom_content, uint32_t latency)
         : sc_module(name), latency(latency), ready("rom_ready"), data("rom_data_out") {
         uint32_t i = 0; // byte index in memory
-        uint32_t j = 0; // word index in rom_content
         
         //Korpieren die Inhalte auf memory
-        for (; j < rom_content_size; ++j) {
-            uint32_t word = rom_content[j];
+        while (rom_content)
+        {
+            if(i >= size){
+                SC_REPORT_ERROR("ROM","ROM size is too small. \n");
+                exit(1);
+            }
+           uint32_t word = rom_content[0];
             for (int k = 0; k < 4; ++k) {
                 memory[i++] = (word >> (k * 8)) & 0xFF;
             }
-            printf("ROM writing value: 0x%08x on Address 0x%08x. \n", word, j * 4);
+            rom_content++;
+            printf("ROM writing value: 0x%08x on Address 0x%08x. \n", word,i-4);
         }
         
         //Füllen weitere Räume mit 0

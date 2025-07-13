@@ -117,7 +117,7 @@ int parse_number(const char* str, uint32_t* value) {
     return 0;
 }
 
-uint32_t* load_rom_content(const char* filename, uint32_t rom_size, uint32_t* actual_size) {
+uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
     FILE* file=fopen(filename, "r");
     if(!file){
         fprintf(stderr, "Cannot open ROM-content file: %s\n", filename);
@@ -143,7 +143,6 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size, uint32_t* ac
         fclose(file);
         return NULL;
     }
-    *actual_size = count;
     fclose(file);
     return content;
 }
@@ -230,14 +229,13 @@ int main(int argc, char* argv[]){
     struct Request* requests = NULL;
     uint32_t num_requests = 0;
     uint32_t* rom_content = NULL;
-    uint32_t rom_content_size = 0;
 
     if(parse_arguments(argc, argv, &config)!=0){
         return 1;
     }
 
     if(config.rom_content_file!=NULL){
-        rom_content = load_rom_content(config.rom_content_file, config.rom_size, &rom_content_size);
+        rom_content = load_rom_content(config.rom_content_file, config.rom_size);
         if(rom_content==NULL){
             fprintf(stderr, "Error loading ROM content.\n");
             return EXIT_FAILURE;
@@ -259,7 +257,6 @@ int main(int argc, char* argv[]){
         config.rom_size,
         config.block_size,
         rom_content,
-        rom_content_size,
         num_requests,
         requests
     );
