@@ -123,7 +123,7 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
         fprintf(stderr, "Cannot open ROM-content file: %s\n", filename);
         return NULL;
     }
-    uint32_t max_entries=rom_size / sizeof(uint32_t);
+    uint32_t max_entries = rom_size / 4;
     uint32_t* content = (uint32_t*)calloc(max_entries, sizeof(uint32_t));
     if(!content){
         fclose(file);
@@ -131,7 +131,7 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
     }
     char line[256];
     uint32_t count=0;
-    while(fgets(line, sizeof(line), file) && count<max_entries) {
+    while(fgets(line, sizeof(line), file)) {
         uint32_t value;
         if (parse_number(line, &value)==0) {
             content[count++]=value;
@@ -142,6 +142,10 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
         free(content);
         fclose(file);
         return NULL;
+    } else if (count < max_entries) {
+        while(count != max_entries) {
+            content[count++] = 0;
+        }
     }
     fclose(file);
     return content;
@@ -262,8 +266,8 @@ int main(int argc, char* argv[]){
     );
 
     printf("\n --- Simulation Finished --- \n");
-    printf("Cycles: \n");
-    printf("Errors: \n");
+    printf("Cycles: %u\n", result.cycles);
+    printf("Errors: %u\n", result.errors);
 
     if(rom_content!=NULL) free(rom_content);
     if(requests!=NULL) free(requests);
