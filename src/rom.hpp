@@ -1,6 +1,5 @@
 #include<systemc>
 #include <map>
-#include "Memory.cpp"
 using namespace sc_core;
 
 
