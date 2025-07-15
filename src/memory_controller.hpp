@@ -49,7 +49,7 @@ SC_MODULE(MEMORY_CONTROLLER)
     // innere Komponenten
     ROM *rom;
     sc_signal<uint32_t> rom_addr_sig, data_cu_rom;
-    sc_signal<bool> rom_read_en, rom_wide_sig, ready_cu_rom;
+    sc_signal<bool> rom_read_en, rom_wide_sig, ready_cu_rom,rom_error;
 
     // Adresse und ihrer Benutzer
     std::map<uint32_t, uint8_t> gewalt;
@@ -78,6 +78,7 @@ SC_MODULE(MEMORY_CONTROLLER)
         rom->wide(rom_wide_sig);
         rom->ready(ready_cu_rom);
         rom->data(data_cu_rom);
+        rom->error(rom_error);   
 
         SC_THREAD(process);
         sensitive << clk.pos();
@@ -160,7 +161,9 @@ SC_MODULE(MEMORY_CONTROLLER)
             // Warten auf Rom —— 等待ROM完成工作并回传，ROM处理宽度问题
             wait(ready_cu_rom.posedge_event());
             wait(SC_ZERO_TIME);
-            printf("[CU] rom_ready arrived, rom_data = 0x%08X\n", data_cu_rom.read());
+
+            if(!rom_error.read()){
+                printf("[CU] rom_ready arrived, rom_data = 0x%08X\n", data_cu_rom.read());
 
             // 读取返回信号, 宽度判断由ROM处理
             rdata.write(data_cu_rom.read());
@@ -168,9 +171,16 @@ SC_MODULE(MEMORY_CONTROLLER)
             ready.write(1);
             printf("[CU] rdata set to 0x%08X, ready=1\n", data_cu_rom.read());
             // 到这一步我们认为ROM已经成功读取， 行为结束
-        }
-        else
-        {
+            }else{
+            printf("ERROR : Bei einem 4-Byte-weiten Lesezugriff ist die Adresse 0x%08x nicht 4-Byte aligned.\n", address);
+            rdata.write(data_cu_rom.read());
+            rom_read_en.write(0);
+            //！！！这里有拉高error信号
+            error.write(1);
+            ready.write(1);
+            wait(SC_ZERO_TIME);
+            }
+        }else{
             // 检验对齐
             if (wide.read())
             {
@@ -310,6 +320,7 @@ SC_MODULE(MEMORY_CONTROLLER)
             else if (benutzer == 255)
             {
                 gewalt.erase(block_addr);
+                return true;
             }
 
             auto it = gewalt.find(block_addr);
@@ -324,16 +335,6 @@ SC_MODULE(MEMORY_CONTROLLER)
                 gewalt[block_addr] = benutzer;
                 printf("Block 0x%08X wurde User %u zugeteilt.\n", block_addr, benutzer);
                 return true;
-            }
-
-            auto tmp = gewalt.find(8);
-            if (tmp != gewalt.end())
-            {
-                printf("见鬼了：0x%08X\n", tmp->second);
-            }
-            else
-            {
-                printf("见鬼了：block 8 未绑定\n");
             }
 
             if (it->second != benutzer)

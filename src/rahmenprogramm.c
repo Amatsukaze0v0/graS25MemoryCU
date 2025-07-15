@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdbool.h>
 #include "rahmenprogramm.h"
 
 #define DEFAULT_CYCLES 100000
@@ -156,6 +158,7 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
     return content;
 }
 
+bool is_line_empty(const char* line); 
 int parse_csv_file(const char* filename, struct Request** requests, uint32_t* num_requests) {
     FILE* file=fopen(filename, "r");
     if(!file){
@@ -182,7 +185,13 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
         return 1;
     }
     *num_requests = 0;
+    uint32_t current_line = 2;
     while(fgets(line, sizeof(line), file) && *num_requests < line_count){
+        if (is_line_empty(line)) {
+            current_line++;
+            continue;
+        }
+
         char* token;
         char* rest = line;
         char* fields[5] = {NULL};
@@ -197,40 +206,100 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
             fields[field_count++] = token;
         }
 
-        if (field_count < 4) continue; // 不合法的行
+        if (field_count != 5) {
+            fprintf(stderr, "Error on line %u: expected 5 fields, got %d\n", current_line, field_count);
+            goto parse_error;
+        } // 不合法的行
+
+         struct Request r;
 
         // type (fields[0])
-        (*requests)[*num_requests].w = (fields[0][0] == 'W' || fields[0][0] == 'w') ? 1 : 0;
+
+        // Type 字段
+        if (fields[0][0] == 'W' || fields[0][0] == 'w') {
+            r.w = 1;
+        } else if (fields[0][0] == 'R' || fields[0][0] == 'r') {
+            r.w = 0;
+        } else {
+            fprintf(stderr, "Error on line %u: unknown Type '%s'\n", current_line, fields[0]);
+            goto parse_error;
+        }
 
         // address (fields[1])
-        uint32_t addr;
-        if (parse_number(fields[1], &addr) != 0) continue;
-        (*requests)[*num_requests].addr = addr;
+       if (parse_number(fields[1], &r.addr) != 0) {
+            fprintf(stderr, "Error on line %u: invalid Address '%s'\n", current_line, fields[1]);
+            goto parse_error;
+        }
 
         // data (fields[2]) —— 仅在 write 时使用
-        uint32_t data = 0;
-        if ((*requests)[*num_requests].w) {
-            if (fields[2] == NULL || strlen(fields[2]) == 0) continue;  // write must have data
-            if (parse_number(fields[2], &data) != 0) continue;
+        if (r.w) {
+            if (fields[2] == NULL || strlen(fields[2]) == 0) {
+                fprintf(stderr, "Error on line %u: write request must have Data\n", current_line);
+                goto parse_error;
+            }
+            if (parse_number(fields[2], &r.data) != 0) {
+                fprintf(stderr, "Error on line %u: invalid Data '%s'\n", current_line, fields[2]);
+                goto parse_error;
+            }
+            if (fields[4][0] == 'F' || fields[4][0] == 'f') {
+                // 窄写最多只能写1字节（<= 0xFF）
+                if (r.data > 0xFF) {
+                    fprintf(stderr, "Error on line %u: narrow write Data too large: 0x%x\n", current_line, r.data);
+                    goto parse_error;
+                }
+            }
+        } else {
+            // 读请求必须为空
+            if (fields[2] != NULL && strlen(fields[2]) > 0) {
+                fprintf(stderr, "Error on line %u: read request must not have Data\n", current_line);
+                goto parse_error;
+            }
+            r.data = 0;
         }
-        (*requests)[*num_requests].data = data;
 
         // user (fields[3])
         uint32_t user;
-        if (parse_number(fields[3], &user) != 0) continue;
-        (*requests)[*num_requests].user = (uint8_t)user;
+        if (parse_number(fields[3], &user) != 0 || user > 255)
+        {
+            fprintf(stderr, "Error on line %u: invalid User '%s'\n", current_line, fields[3]);
+            goto parse_error;
+        }
+        r.user = (uint8_t)user;
 
         // wide (fields[4])
-        if (field_count >= 5) {
-            (*requests)[*num_requests].wide = (fields[4][0] == 'T' || fields[4][0] == 't') ? 1 : 0;
-        } else {
-            (*requests)[*num_requests].wide = 0; // 默认非宽模式
+        if (fields[4][0] == 'T' || fields[4][0] == 't')
+        {
+            r.wide = 1;
+        }
+        else if (fields[4][0] == 'F' || fields[4][0] == 'f')
+        {
+            r.wide = 0;
+        }
+        else
+        {
+            fprintf(stderr, "Error on line %u: invalid Wide flag '%s'\n", current_line, fields[4]);
+            goto parse_error;
         }
 
-        (*num_requests)++;
+        (*requests)[(*num_requests)++] = r;
+        current_line++;
+        continue;
+
+        parse_error:
+        free(*requests);
+        fclose(file);
+        return 1;
     }
     fclose(file);
     return 0;
+}
+
+bool is_line_empty(const char* line) {
+    while (*line) {
+        if (!isspace((unsigned char)*line)) return false;
+        line++;
+    }
+    return true;
 }
 
 int main(int argc, char* argv[]){

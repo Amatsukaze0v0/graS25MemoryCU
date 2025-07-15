@@ -25,7 +25,7 @@ struct Result run_simulation(
     sc_signal<uint8_t> user;
 
     MEMORY_CONTROLLER* memory_controller = new MEMORY_CONTROLLER("memory_controller",romSize,romContent,latencyRom,blockSize);
-    MAIN_MEMORY* memory = new MAIN_MEMORY("Main_Memory", 0);
+    MAIN_MEMORY* memory = new MAIN_MEMORY("Main_Memory", 3);
 
     memory_controller->clk(clk);
     memory_controller->addr(addr);
