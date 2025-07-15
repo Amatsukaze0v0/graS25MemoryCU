@@ -267,17 +267,6 @@ SC_MODULE(MEMORY_CONTROLLER)
             mem_w.write(0);
 
             printf("[CU] memory write done: addr=0x%08X, wdata=0x%08X\n", addr.read(), new_data);
-            // Benutzer mit Adresse verknüpfen
-            if (user.read() != 0 && user.read() != 255)
-            {
-                uint32_t block_addr = (addr.read() / block_size) * block_size;
-                gewalt[block_addr] = user.read();
-            }
-            else if (user.read() == 255)
-            {
-                uint32_t block_addr = (addr.read() / block_size) * block_size;
-                gewalt.erase(block_addr);
-            }
 
             ready.write(1);
         }
