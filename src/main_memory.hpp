@@ -27,8 +27,16 @@ SC_MODULE(MAIN_MEMORY)
    * @param name systemC模块名
    * @param latency_ns 主存延迟，以纳秒为单位
    */
-  MAIN_MEMORY(sc_module_name name, uint32_t latency_ns = 100) : sc_module(name), latency(latency_ns)
+  MAIN_MEMORY(sc_module_name name, uint32_t latency_clk) : sc_module(name)
   {
+    if (latency_clk > 0)
+    {
+      latency = latency_clk;
+    }
+    else
+    {
+      latency = 3;
+    }
     SC_THREAD(behaviour);
     sensitive << clk.pos();
   }
@@ -56,7 +64,10 @@ SC_MODULE(MAIN_MEMORY)
 
     uint32_t result = get(addr.read());
 
-    wait(latency);
+    for (int i = 0; i < latency; i++)
+    {
+      wait();
+    }
 
     rdata.write(result);
     if (!dontSetReady)
@@ -70,7 +81,10 @@ SC_MODULE(MAIN_MEMORY)
     ready.write(false);
     set(addr.read(), wdata.read());
 
-    wait(latency);
+    for (int i = 0; i < latency; i++)
+    {
+      wait();
+    }
 
     ready.write(true);
   }

@@ -10,7 +10,7 @@ SC_MODULE(ROM)
 
     sc_in<bool> clk, wide, read_en{"ROM_enable"};
     sc_in<uint32_t> addr;
-    sc_out<bool> ready,error;
+    sc_out<bool> ready, error;
     sc_out<uint32_t> data;
     std::map<uint32_t, uint8_t> memory;
     uint32_t latency;
@@ -26,9 +26,17 @@ SC_MODULE(ROM)
      * @param rom_content 数组指针，指向初始化数组
      *
      */
-    ROM(sc_module_name name, uint32_t size, uint32_t *rom_content, uint32_t latency)
-        : sc_module(name), latency(latency), ready("rom_ready"), data("rom_data_out")
+    ROM(sc_module_name name, uint32_t size, uint32_t *rom_content, uint32_t latency_clk)
+        : sc_module(name), ready("rom_ready"), data("rom_data_out")
     {
+        if (latency_clk > 0)
+        {
+            latency = latency_clk;
+        }
+        else
+        {
+            latency = 3;
+        }
         uint32_t i = 0; // byte index in memory
         uint32_t max_index = size * 4;
         // Korpieren die Inhalte auf memory
@@ -69,7 +77,9 @@ SC_MODULE(ROM)
                 error.write(false);
 
                 // latency Simulation
-                wait(latency);
+                for(int i =0;i < latency;i++){
+                    wait();
+                }
 
                 uint32_t addresse = addr.read();
                 if (!wide.read())
@@ -89,7 +99,8 @@ SC_MODULE(ROM)
                 }
                 else
                 {
-                    if(addresse % 4 != 0){
+                    if (addresse % 4 != 0)
+                    {
                         data.write(0x00);
                         error.write(true);
                         ready.write(true);
