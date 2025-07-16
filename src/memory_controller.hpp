@@ -125,8 +125,6 @@ SC_MODULE(MEMORY_CONTROLLER)
                     continue;
                 }
             }
-
-            error.write(0);
         }
     }
 
@@ -143,10 +141,7 @@ SC_MODULE(MEMORY_CONTROLLER)
             // Überprüfung, ob die 4-Byte-ausgerichtete Adresse außerhalb des ROM-Bereichs liegt
             if (wide.read() && rom->size() < 4 || address > rom->size() - 4)
             {
-                char buf[128];
                 printf("Error without interruption: Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
-                // snprintf(buf, sizeof(buf), "Address 0x%08X by ROM access is out of Range under 4B alignment.\n", address);
-                // SC_REPORT_ERROR("Memory Controller : read", buf);
                 error.write(1);
                 ready.write(1);
                 return;
@@ -186,14 +181,14 @@ SC_MODULE(MEMORY_CONTROLLER)
             {
                 uint32_t address = addr.read();
                 // 赋值addr，并给予信号开始4B读取
-                printf("[CU] memory 4B read request: addr=0x%08X, wide=%d\n", addr.read(), wide.read());
+                printf("[CU] memory 4B read request: addr=0x%08X, wide=%d\n", address, wide.read());
                 mem_addr.write(addr.read());
                 mem_r.write(1);
                 // 等待mem读取完成
                 printf("[CU] wait for mem_ready.posedge_event() ...\n");
                 wait(mem_ready.posedge_event());
                 wait(SC_ZERO_TIME);
-                printf("[CU] memory 4B read done: addr=0x%08X, mem_rdata=0x%08X\n", addr.read(), mem_rdata.read());
+                printf("[CU] memory 4B read done: addr=0x%08X, mem_rdata=0x%08X\n", address, mem_rdata.read());
                 // 按宽度写入返回值
                 rdata.write(mem_rdata.read());
                 // 结束mem读取逻辑
@@ -295,7 +290,6 @@ SC_MODULE(MEMORY_CONTROLLER)
     {
         uint8_t benutzer = user.read();
         uint32_t adresse = addr.read();
-        uint32_t num_bytes = wide.read() ? 4 : 1;
 
         // ROM 区域允许读，不允许写
         if (adresse < rom->size())

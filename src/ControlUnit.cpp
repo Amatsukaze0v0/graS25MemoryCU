@@ -115,10 +115,19 @@ struct Result run_simulation(
         sc_start(period);  // 一拍启动：传递信号到模块
         total_cycles++;
 
+        if(total_cycles == cycles){
+            std::cerr << "Fehler: Unzureichende Taktzyklen, Befehl nicht vollständig ausgeführt." << std::endl;
+            goto cycle_deficit;
+        }
+
         // 可选：等待 ready 信号变为 true
         while (!ready.read()) {
             sc_start(period); // 等待模块响应
             total_cycles++;
+            if(total_cycles == cycles){
+            std::cerr << "Fehler: Unzureichende Taktzyklen, Befehl nicht vollständig ausgeführt." << std::endl;
+            goto cycle_deficit;
+        }
         }
 
         if (error.read()) {
@@ -148,7 +157,11 @@ struct Result run_simulation(
     }
 
     //题目貌似要求要运行那么多周期，那么新问题是周期超了怎么办
-    sc_start((cycles-total_cycles)*period);
+    for(int i = total_cycles;i < cycles;i++){
+        sc_start(period);
+    }
+
+cycle_deficit:
 
     if (tf != nullptr) {
         sc_close_vcd_trace_file(tf);

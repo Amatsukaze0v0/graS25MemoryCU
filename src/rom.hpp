@@ -38,7 +38,6 @@ SC_MODULE(ROM)
             latency = 3;
         }
         uint32_t i = 0; // byte index in memory
-        uint32_t max_index = size * 4;
         // Korpieren die Inhalte auf memory
         while (i < size)
         {
