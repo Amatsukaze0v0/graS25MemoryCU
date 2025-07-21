@@ -5,6 +5,8 @@
 #include <map>
 using namespace sc_core;
 
+//Dieses Modul basiert größtenteils auf dem Code aus der Übungsaufgabe.
+
 SC_MODULE(MAIN_MEMORY)
 {
   sc_in<bool> clk;
@@ -18,15 +20,10 @@ SC_MODULE(MAIN_MEMORY)
   sc_out<bool> ready{"ready_in_Mem"};
 
   std::map<uint32_t, uint32_t> memory;
-  uint32_t latency; // 以ns表示的主存延迟
+  uint32_t latency;
 
   SC_HAS_PROCESS(MAIN_MEMORY);
 
-  /**
-   * 主存构造器，接收latency传参作为延迟变量，默认为100ns
-   * @param name systemC模块名
-   * @param latency_ns 主存延迟，以纳秒为单位
-   */
   MAIN_MEMORY(sc_module_name name, uint32_t latency_clk) : sc_module(name)
   {
     if (latency_clk > 0)
@@ -102,7 +99,7 @@ SC_MODULE(MAIN_MEMORY)
       }
       result |= value << (i * 8);
     }
-    printf("[MEM] Value got from memory as 0x%08x at address 0x%08x. \n", result, address);
+    printf("[MEM] Wert aus dem Speicher gelesen: 0x%08x an Adresse 0x%08x.\n", result, address);
     return result;
   }
 
@@ -116,7 +113,7 @@ SC_MODULE(MAIN_MEMORY)
         break;
       }
     }
-    printf("[MEM] Value set to memory as 0x%08x at address 0x%08x. \n", value, address);
+    printf("[MEM] Wert in den Speicher geschrieben: 0x%08x an Adresse 0x%08x.\n", value, address);
   }
 };
 

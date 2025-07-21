@@ -3,29 +3,27 @@
 #include "rahmenprogramm.h"
 #include "memory_controller.hpp"
 
-
-
 struct Result run_simulation(
     uint32_t cycles,
-    const char* tracefile,
+    const char *tracefile,
     uint32_t latencyRom,
     uint32_t romSize,
     uint32_t blockSize,
-    uint32_t* romContent,
+    uint32_t *romContent,
     uint32_t numRequests,
-    struct Request* requests
-) {
+    struct Request *requests)
+{
     struct Result result = {0, 0};
 
-    sc_time period(10, SC_NS);  // 时钟周期 10ns
+    sc_time period(10, SC_NS);
 
     sc_clock clk("clk", period);
-    sc_signal<uint32_t> addr,wdata,mem_rdata,rdata,mem_addr,mem_wdata;
-    sc_signal<bool> r,w,wide,mem_ready,ready,error,mem_r,mem_w;
+    sc_signal<uint32_t> addr, wdata, mem_rdata, rdata, mem_addr, mem_wdata;
+    sc_signal<bool> r, w, wide, mem_ready, ready, error, mem_r, mem_w;
     sc_signal<uint8_t> user;
 
-    MEMORY_CONTROLLER* memory_controller = new MEMORY_CONTROLLER("memory_controller",romSize,romContent,latencyRom,blockSize);
-    MAIN_MEMORY* memory = new MAIN_MEMORY("Main_Memory", 3);
+    MEMORY_CONTROLLER *memory_controller = new MEMORY_CONTROLLER("memory_controller", romSize, romContent, latencyRom, blockSize);
+    MAIN_MEMORY *memory = new MAIN_MEMORY("Main_Memory", 3);
 
     memory_controller->clk(clk);
     memory_controller->addr(addr);
@@ -55,18 +53,18 @@ struct Result run_simulation(
     uint32_t total_cycles = 0;
     uint32_t error_count = 0;
 
-    sc_trace_file* tf = nullptr;
-    //设置信号文件，这里判断了是否传入信号文件路径，传入了才进行
-    if (tracefile != nullptr && strlen(tracefile) > 0) {
-        // 去掉 .vcd 后缀（如果有）
+    sc_trace_file *tf = nullptr;
+    if (tracefile != nullptr && strlen(tracefile) > 0)
+    {
         std::string tfname(tracefile);
-        if (tfname.size() >= 4 && tfname.substr(tfname.size() - 4) == ".vcd") {
-            tfname = tfname.substr(0, tfname.size() - 4);  // 去除 ".vcd"
+        if (tfname.size() >= 4 && tfname.substr(tfname.size() - 4) == ".vcd")
+        {
+            tfname = tfname.substr(0, tfname.size() - 4); // 去除 ".vcd"
         }
 
         tf = sc_create_vcd_trace_file(tfname.c_str());
 
-        // 绑定所有信号
+        // Alle Signale anbinden
         sc_trace(tf, clk, "clk");
 
         sc_trace(tf, addr, "addr");
@@ -91,51 +89,55 @@ struct Result run_simulation(
 
         std::cout << "[TRACE] Tracing enabled: " << tfname << ".vcd\n";
     }
-    for (std::size_t i = 0; i < numRequests; ++i) {
-        const Request& req = requests[i];
+    for (std::size_t i = 0; i < numRequests; ++i)
+    {
+        const Request &req = requests[i];
 
-        // 设置输入信号
+        // Eingangssignale setzen
         addr.write(req.addr);
         wdata.write(req.data);
         w.write(req.w);
-        r.write(!req.w);  // 假设不是写就是读
+        r.write(!req.w); // Annahme: wenn nicht Schreiben, dann Lesen
         wide.write(req.wide);
         user.write(req.user);
 
-        // 打印调试信息
+        // Debug Informationen
         std::cout << "[" << sc_time_stamp() << "] "
-                << (req.w ? "WRITE" : "READ") << " request: "
-                << "addr=0x" << std::hex << req.addr
-                << ", data=0x" << req.data
-                << ", user=" << std::dec << (int)req.user
-                << ", wide=" << (int)req.wide
-                << std::endl;
+                  << (req.w ? "WRITE" : "READ") << " request: "
+                  << "addr=0x" << std::hex << req.addr
+                  << ", data=0x" << req.data
+                  << ", user=" << std::dec << (int)req.user
+                  << ", wide=" << (int)req.wide
+                  << std::endl;
 
-        // 启动仿真一个周期（或多个周期）
-        sc_start(period);  // 一拍启动：传递信号到模块
+        // Simulation für einen Taktzyklus starten
+        sc_start(period); // Ein Taktzyklus: Signale an das Modul übergeben
         total_cycles++;
 
-        if(total_cycles == cycles){
+        if (total_cycles == cycles)
+        {
             std::cerr << "Fehler: Unzureichende Taktzyklen, Befehl nicht vollständig ausgeführt." << std::endl;
             goto cycle_deficit;
         }
 
-        // 可选：等待 ready 信号变为 true
-        while (!ready.read()) {
-            sc_start(period); // 等待模块响应
+        while (!ready.read())
+        {
+            sc_start(period); // Auf Modulantwort warten
             total_cycles++;
-            if(total_cycles == cycles){
-            std::cerr << "Fehler: Unzureichende Taktzyklen, Befehl nicht vollständig ausgeführt." << std::endl;
-            goto cycle_deficit;
-        }
-        }
-
-        if (error.read()) {
-                std::cerr << "  --> ERROR: Module reported error on request " << i << std::endl;
-                error_count++;
+            if (total_cycles == cycles)
+            {
+                std::cerr << "Fehler: Unzureichende Taktzyklen, Befehl nicht vollständig ausgeführt." << std::endl;
+                goto cycle_deficit;
+            }
         }
 
-        //这里统一重置信号，mc里面的一些地方可能多余
+        if (error.read())
+        {
+            std::cerr << " --> FEHLER: Modul hat einen Fehler bei der Anfrage gemeldet " << i << std::endl;
+            error_count++;
+        }
+
+        // reset
         addr.write(0);
         wdata.write(0);
         mem_rdata.write(0);
@@ -153,17 +155,18 @@ struct Result run_simulation(
         mem_w.write(false);
 
         user.write(0);
-
     }
 
-    //题目貌似要求要运行那么多周期，那么新问题是周期超了怎么办
-    for(int i = total_cycles;i < cycles;i++){
+    // Die verbleibenden Taktzyklen ausführen
+    for (int i = total_cycles; i < cycles; i++)
+    {
         sc_start(period);
     }
 
 cycle_deficit:
 
-    if (tf != nullptr) {
+    if (tf != nullptr)
+    {
         sc_close_vcd_trace_file(tf);
     }
 
@@ -173,7 +176,8 @@ cycle_deficit:
     return result;
 }
 
-int sc_main(int argc, char* argv[]) {
+int sc_main(int argc, char *argv[])
+{
     std::cout << "ERROR" << std::endl;
     return 1;
 }

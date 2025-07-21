@@ -11,23 +11,25 @@
 #define DEFAULT_ROM_SIZE 0x100000
 #define DEFAULT_BLOCK_SIZE 0x1000 // Both examples from pdf data
 
-void print_help(const char* prog_name) {
-    fprintf(stderr, "Usage: %s [options] <input_file>\n\n", prog_name);
-    fprintf(stderr, "Options:\n");
-    fprintf(stderr, "  --cycles <num>           Number of cycles (default: %d)\n", DEFAULT_CYCLES);
-    fprintf(stderr, "  --tf <string>            Path to the Tracefile\n");
-    fprintf(stderr, "  --latency-rom <num>      Latency of ROM (default: %d)\n", DEFAULT_LATENCY_ROM);
-    fprintf(stderr, "  --rom-size <num>         Size of ROM in Bytes (default: %#x)\n", DEFAULT_ROM_SIZE);
-    fprintf(stderr, "  --block-size <num>       Size of Memory-block in Bytes (default: %#x)\n", DEFAULT_BLOCK_SIZE);
-    fprintf(stderr, "  --rom-content <string>   Path to the content of ROM\n");
-    fprintf(stderr, "  --help                   Show this help message\n");
+void print_help(const char *prog_name)
+{
+    fprintf(stderr, "Verwendung: %s [Optionen] <Eingabedatei>\n\n", prog_name);
+    fprintf(stderr, "Optionen:\n");
+    fprintf(stderr, "  --cycles <Zahl>          Anzahl der Zyklen (Standard: %d)\n", DEFAULT_CYCLES);
+    fprintf(stderr, "  --tf <Zeichenkette>      Pfad zur Trace-Datei\n");
+    fprintf(stderr, "  --latency-rom <Zahl>     Latenz der ROM (Standard: %d)\n", DEFAULT_LATENCY_ROM);
+    fprintf(stderr, "  --rom-size <Zahl>        Größe der ROM in Bytes (Standard: %#x)\n", DEFAULT_ROM_SIZE);
+    fprintf(stderr, "  --block-size <Zahl>      Größe eines Speicherblocks in Bytes (Standard: %#x)\n", DEFAULT_BLOCK_SIZE);
+    fprintf(stderr, "  --rom-content <Pfad>     Pfad zum ROM-Inhalt\n");
+    fprintf(stderr, "  --help                   Diese Hilfemeldung anzeigen\n");
 }
 
-int parse_arguments(int argc, char* argv[], MemConfig *config) {
+int parse_arguments(int argc, char *argv[], MemConfig *config)
+{
 
     int opt;
-    int option_index=0;
-    
+    int option_index = 0;
+
     static struct option long_options[] = {
         {"cycles", required_argument, 0, 'c'},
         {"tf", required_argument, 0, 't'},
@@ -36,82 +38,90 @@ int parse_arguments(int argc, char* argv[], MemConfig *config) {
         {"block-size", required_argument, 0, 'b'},
         {"rom-content", required_argument, 0, 'r'},
         {"help", no_argument, 0, 'h'},
-        {0, 0, 0, 0}
-    };
-    
+        {0, 0, 0, 0}};
+
     // Set default values
-    config->cycles=DEFAULT_CYCLES;
-    config->block_size=DEFAULT_BLOCK_SIZE;
-    config->inputfile=NULL;
-    config->latency_rom=DEFAULT_LATENCY_ROM;
-    config->rom_content_file=NULL;
-    config->rom_size=DEFAULT_ROM_SIZE;
-    config->tracefile=NULL;
-    
-    while ((opt = getopt_long(argc, argv, "c:t:l:s:b:r:h", long_options, &option_index)) != -1) {
-        switch (opt) {
-            case 'c':
-                config->cycles=atoi(optarg);
-                break;
-            case 't':
-                config->tracefile = optarg;
-                break;
-            case 'l':
-                config->latency_rom=atoi(optarg);
-                break;
-            case 's':
-                config->rom_size=atoi(optarg);
-                break;
-            case 'b':
-                config->block_size=atoi(optarg);
-                break;
-            case 'r':
-                config->rom_content_file = optarg;
-                break;
-            case 'h':
-                print_help(argv[0]);
-                exit(0);
-            default:
-                print_help(argv[0]);
-                exit(0);
+    config->cycles = DEFAULT_CYCLES;
+    config->block_size = DEFAULT_BLOCK_SIZE;
+    config->inputfile = NULL;
+    config->latency_rom = DEFAULT_LATENCY_ROM;
+    config->rom_content_file = NULL;
+    config->rom_size = DEFAULT_ROM_SIZE;
+    config->tracefile = NULL;
+
+    while ((opt = getopt_long(argc, argv, "c:t:l:s:b:r:h", long_options, &option_index)) != -1)
+    {
+        switch (opt)
+        {
+        case 'c':
+            config->cycles = atoi(optarg);
+            break;
+        case 't':
+            config->tracefile = optarg;
+            break;
+        case 'l':
+            config->latency_rom = atoi(optarg);
+            break;
+        case 's':
+            config->rom_size = atoi(optarg);
+            break;
+        case 'b':
+            config->block_size = atoi(optarg);
+            break;
+        case 'r':
+            config->rom_content_file = optarg;
+            break;
+        case 'h':
+            print_help(argv[0]);
+            exit(0);
+        default:
+            print_help(argv[0]);
+            exit(0);
         }
     }
-    
-    if (optind < argc) {
-        config->inputfile=argv[optind];
-        if(strlen(config->inputfile)<4 || strcmp(config->inputfile + strlen(config->inputfile)-4, ".csv")!=0){
+
+    if (optind < argc)
+    {
+        config->inputfile = argv[optind];
+        // Überprüfen, ob der Dateiname gültig ist und die Endung ".csv" hat
+        if (strlen(config->inputfile) < 4 || strcmp(config->inputfile + strlen(config->inputfile) - 4, ".csv") != 0)
+        {
             // Check whether the name or type of inputfile is valid
-            fprintf(stderr, "Input file invalid!\n");
+            fprintf(stderr, "Eingabedatei ungültig!\n");
             print_help(argv[0]);
             exit(EXIT_FAILURE);
         }
-        fprintf(stderr, "Input file: %s\n", config->inputfile);
-    } else {
-        fprintf(stderr, "Input file required!\n");
+        fprintf(stderr, "Eingabedatei: %s\n", config->inputfile);
+    }
+    else
+    {
+        fprintf(stderr, "Eingabedatei erforderlich!\n");
         return 1;
     }
-    
+
     return 0;
 }
 
-int parse_number(const char* str, uint32_t* value) {
-    // 1. 复制并清除结尾换行和空白
+int parse_number(const char *str, uint32_t *value)
+{
+    // Kopieren und Entfernen von Zeilenumbrüchen und Leerzeichen am Ende
     char clean[256];
     strncpy(clean, str, sizeof(clean));
     clean[sizeof(clean) - 1] = '\0';
 
-    // 去除末尾换行/空格
+    // Entfernen von Zeilenumbruch/Leerzeichen am Ende
     size_t len = strlen(clean);
-    while (len > 0 && (clean[len - 1] == '\n' || clean[len - 1] == '\r' || clean[len - 1] == ' ' || clean[len - 1] == '\t')) {
+    while (len > 0 && (clean[len - 1] == '\n' || clean[len - 1] == '\r' || clean[len - 1] == ' ' || clean[len - 1] == '\t'))
+    {
         clean[--len] = '\0';
     }
 
-    // 2. 自动判断进制（0x/0X 前缀 → hex）
-    char* endptr;
+    // Automatische Erkennung des Zahlensystems (Präfix 0x/0X → hexadezimal)
+    char *endptr;
     unsigned long val = strtoul(clean, &endptr, 0);
 
-    // 3. 验证结果是否合法
-    if (endptr == clean || *endptr != '\0' || val > UINT32_MAX) {
+    if (endptr == clean || *endptr != '\0' || val > UINT32_MAX)
+    {
         return 1;
     }
 
@@ -119,38 +129,48 @@ int parse_number(const char* str, uint32_t* value) {
     return 0;
 }
 
-uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
-    FILE* file=fopen(filename, "r");
-    if(!file){
-        fprintf(stderr, "Cannot open ROM-content file: %s\n", filename);
+uint32_t *load_rom_content(const char *filename, uint32_t rom_size)
+{
+    FILE *file = fopen(filename, "r");
+    if (!file)
+    {
+        fprintf(stderr, "Kann ROM-Inhaltsdatei nicht öffnen: %s\n", filename);
         return NULL;
     }
-    if (rom_size % 2 != 0) {
-        fprintf(stderr, "Error: ROM size must be power of 2!\n");
+    if (rom_size % 2 != 0)
+    {
+        fprintf(stderr, "Fehler: ROM-Größe muss eine Zweierpotenz sein!\n");
         fclose(file);
         return NULL;
     }
     uint32_t max_entries = rom_size / 4;
-    uint32_t* content = (uint32_t*)calloc(max_entries, sizeof(uint32_t));
-    if(!content){
+    uint32_t *content = (uint32_t *)calloc(max_entries, sizeof(uint32_t));
+    if (!content)
+    {
         fclose(file);
         return NULL;
     }
     char line[256];
-    uint32_t count=0;
-    while(fgets(line, sizeof(line), file)) {
+    uint32_t count = 0;
+    while (fgets(line, sizeof(line), file))
+    {
         uint32_t value;
-        if (parse_number(line, &value)==0) {
-            content[count++]=value;
+        if (parse_number(line, &value) == 0)
+        {
+            content[count++] = value;
         }
     }
-    if(count>max_entries){
-        fprintf(stderr, "Error: Content in ROM has greater size than ROM size!\n");
+    if (count > max_entries)
+    {
+        fprintf(stderr, "Der Inhalt der ROM überschreitet die ROM-Größe!\n");
         free(content);
         fclose(file);
         return NULL;
-    } else if (count < max_entries) {
-        while(count != max_entries) {
+    }
+    else if (count < max_entries)
+    {
+        while (count != max_entries)
+        {
             content[count++] = 0;
         }
     }
@@ -158,100 +178,121 @@ uint32_t* load_rom_content(const char* filename, uint32_t rom_size) {
     return content;
 }
 
-bool is_line_empty(const char* line); 
-int parse_csv_file(const char* filename, struct Request** requests, uint32_t* num_requests) {
-    FILE* file=fopen(filename, "r");
-    if(!file){
-        fprintf(stderr, "Cannot open CSV file: %s\n", filename);
+bool is_line_empty(const char *line);
+int parse_csv_file(const char *filename, struct Request **requests, uint32_t *num_requests)
+{
+    FILE *file = fopen(filename, "r");
+    if (!file)
+    {
+        fprintf(stderr, "Kann CSV-Datei nicht öffnen: %s\n", filename);
         return 1;
     }
     char line[256];
-    if(!fgets(line, sizeof(line), file)){
-        fprintf(stderr, "Error: CSV file empty!\n");
+    if (!fgets(line, sizeof(line), file))
+    {
+        fprintf(stderr, "Fehler: CSV-Datei ist leer!\n");
         fclose(file);
         return 1;
     }
-    
-    uint32_t line_count=0;
-    while(fgets(line, sizeof(line), file)){ // Count total number of rows
+
+    uint32_t line_count = 0;
+    while (fgets(line, sizeof(line), file))
+    { // Count total number of rows
         line_count++;
     }
     rewind(file);
     fgets(line, sizeof(line), file); // Skip the table head (First row)
-    
-    *requests = (struct Request*)malloc(line_count * sizeof(struct Request));
-    if(!*requests){
+
+    *requests = (struct Request *)malloc(line_count * sizeof(struct Request));
+    if (!*requests)
+    {
         fclose(file);
         return 1;
     }
     *num_requests = 0;
     uint32_t current_line = 2;
-    while(fgets(line, sizeof(line), file) && *num_requests < line_count){
-        if (is_line_empty(line)) {
+    while (fgets(line, sizeof(line), file) && *num_requests < line_count)
+    {
+        if (is_line_empty(line))
+        {
             current_line++;
             continue;
         }
 
-        char* token;
-        char* rest = line;
-        char* fields[5] = {NULL};
+        char *token;
+        char *rest = line;
+        char *fields[5] = {NULL};
         int field_count = 0;
 
-        // 分隔5个字段（最多）
-        while ((token = strtok_r(rest, ",", &rest)) && field_count < 5) {
-            // 去掉首尾引号
-            if (token[0] == '"') token++;
-            char* end = token + strlen(token) - 1;
-            if (*end == '"') *end = '\0';
+        while ((token = strtok_r(rest, ",", &rest)) && field_count < 5)
+        {
+            if (token[0] == '"')
+                token++;
+            char *end = token + strlen(token) - 1;
+            if (*end == '"')
+                *end = '\0';
             fields[field_count++] = token;
         }
 
-        if (field_count != 5) {
-            fprintf(stderr, "Error on line %u: expected 5 fields, got %d\n", current_line, field_count);
+        if (field_count != 5)
+        {
+            fprintf(stderr, "Fehler in Zeile %u: 5 Parameter erwartet, aber %d erhalten\n", current_line, field_count);
             goto parse_error;
-        } // 不合法的行
+        }
 
-         struct Request r;
+        struct Request r;
 
         // type (fields[0])
 
-        // Type 字段
-        if (fields[0][0] == 'W' || fields[0][0] == 'w') {
+        // Type
+        if (fields[0][0] == 'W' || fields[0][0] == 'w')
+        {
             r.w = 1;
-        } else if (fields[0][0] == 'R' || fields[0][0] == 'r') {
+        }
+        else if (fields[0][0] == 'R' || fields[0][0] == 'r')
+        {
             r.w = 0;
-        } else {
-            fprintf(stderr, "Error on line %u: unknown Type '%s'\n", current_line, fields[0]);
+        }
+        else
+        {
+            fprintf(stderr, "Fehler in Zeile %u: Unbekannter Typ '%s'\n", current_line, fields[0]);
             goto parse_error;
         }
 
         // address (fields[1])
-       if (parse_number(fields[1], &r.addr) != 0) {
-            fprintf(stderr, "Error on line %u: invalid Address '%s'\n", current_line, fields[1]);
+        if (parse_number(fields[1], &r.addr) != 0)
+        {
+            fprintf(stderr, "Fehler in Zeile %u: Ungültige Adresse '%s'\n", current_line, fields[1]);
             goto parse_error;
         }
 
-        // data (fields[2]) —— 仅在 write 时使用
-        if (r.w) {
-            if (fields[2] == NULL || strlen(fields[2]) == 0) {
-                fprintf(stderr, "Error on line %u: write request must have Data\n", current_line);
+        // data (fields[2])
+        if (r.w)
+        {
+            if (fields[2] == NULL || strlen(fields[2]) == 0)
+            {
+                fprintf(stderr, "Fehler in Zeile %u: Schreibanforderung muss Daten enthalten\n", current_line);
                 goto parse_error;
             }
-            if (parse_number(fields[2], &r.data) != 0) {
-                fprintf(stderr, "Error on line %u: invalid Data '%s'\n", current_line, fields[2]);
+            if (parse_number(fields[2], &r.data) != 0)
+            {
+                fprintf(stderr, "Fehler in Zeile %u: Ungültige Daten '%s'\n", current_line, fields[2]);
                 goto parse_error;
             }
-            if (fields[4][0] == 'F' || fields[4][0] == 'f') {
-                // 窄写最多只能写1字节（<= 0xFF）
-                if (r.data > 0xFF) {
-                    fprintf(stderr, "Error on line %u: narrow write Data too large: 0x%x\n", current_line, r.data);
+            if (fields[4][0] == 'F' || fields[4][0] == 'f')
+            {
+                if (r.data > 0xFF)
+                {
+                    fprintf(stderr, "Fehler in Zeile %u: Narrow-Write-Daten zu groß: 0x%x\n", current_line, r.data);
                     goto parse_error;
                 }
             }
-        } else {
-            // 读请求必须为空
-            if (fields[2] != NULL && strlen(fields[2]) > 0) {
-                fprintf(stderr, "Error on line %u: read request must not have Data\n", current_line);
+        }
+        else
+        {
+            if (fields[2] != NULL && strlen(fields[2]) > 0)
+            {
+                fprintf(stderr, "Fehler in Zeile %u: Leseanforderung darf keine Daten enthalten\n", current_line);
                 goto parse_error;
             }
             r.data = 0;
@@ -261,7 +302,7 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
         uint32_t user;
         if (parse_number(fields[3], &user) != 0 || user > 255)
         {
-            fprintf(stderr, "Error on line %u: invalid User '%s'\n", current_line, fields[3]);
+            fprintf(stderr, "Fehler in Zeile %u: Ungültiger Benutzer '%s'\n", current_line, fields[3]);
             goto parse_error;
         }
         r.user = (uint8_t)user;
@@ -277,7 +318,7 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
         }
         else
         {
-            fprintf(stderr, "Error on line %u: invalid Wide flag '%s'\n", current_line, fields[4]);
+            fprintf(stderr, "Fehler in Zeile %u: Ungültiges Wide-Flag '%s'\n", current_line, fields[4]);
             goto parse_error;
         }
 
@@ -285,7 +326,7 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
         current_line++;
         continue;
 
-        parse_error:
+    parse_error:
         free(*requests);
         fclose(file);
         return 1;
@@ -294,35 +335,44 @@ int parse_csv_file(const char* filename, struct Request** requests, uint32_t* nu
     return 0;
 }
 
-bool is_line_empty(const char* line) {
-    while (*line) {
-        if (!isspace((unsigned char)*line)) return false;
+bool is_line_empty(const char *line)
+{
+    while (*line)
+    {
+        if (!isspace((unsigned char)*line))
+            return false;
         line++;
     }
     return true;
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char *argv[])
+{
     MemConfig config;
-    struct Request* requests = NULL;
+    struct Request *requests = NULL;
     uint32_t num_requests = 0;
-    uint32_t* rom_content = NULL;
+    uint32_t *rom_content = NULL;
 
-    if(parse_arguments(argc, argv, &config)!=0){
+    if (parse_arguments(argc, argv, &config) != 0)
+    {
         return 1;
     }
 
-    if(config.rom_content_file!=NULL){
+    if (config.rom_content_file != NULL)
+    {
         rom_content = load_rom_content(config.rom_content_file, config.rom_size);
-        if(rom_content==NULL){
-            fprintf(stderr, "Error loading ROM content.\n");
+        if (rom_content == NULL)
+        {
+            fprintf(stderr, "Fehler beim Laden des ROM-Inhalts.\n");
             return EXIT_FAILURE;
         }
     }
 
-    if(parse_csv_file(config.inputfile, &requests, &num_requests)!=0){
-        fprintf(stderr, "Error parsing CSV file.\n");
-        if(rom_content!=NULL){
+    if (parse_csv_file(config.inputfile, &requests, &num_requests) != 0)
+    {
+        fprintf(stderr, "Fehler beim Parsen der CSV-Datei.\n");
+        if (rom_content != NULL)
+        {
             free(rom_content);
         }
         return EXIT_FAILURE;
@@ -336,14 +386,15 @@ int main(int argc, char* argv[]){
         config.block_size,
         rom_content,
         num_requests,
-        requests
-    );
+        requests);
 
-    printf("\n --- Simulation Finished --- \n");
-    printf("Cycles: %u\n", result.cycles);
-    printf("Errors: %u\n", result.errors);
+    printf("\n --- Simulation beendet --- \n");
+    printf("Zyklen: %u\n", result.cycles);
+    printf("Fehler: %u\n", result.errors);
 
-    if(rom_content!=NULL) free(rom_content);
-    if(requests!=NULL) free(requests);
+    if (rom_content != NULL)
+        free(rom_content);
+    if (requests != NULL)
+        free(requests);
     return 0;
 }

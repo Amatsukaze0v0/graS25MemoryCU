@@ -17,15 +17,6 @@ SC_MODULE(ROM)
 
     SC_HAS_PROCESS(ROM);
 
-    // TODO: 此处memory没有设定latency，默认值为 0 Ns;
-    /**
-     * 创建一个ROM，存在对于size的二次检查
-     *
-     * @param name 名字
-     * @param size 设定的ROM大小
-     * @param rom_content 数组指针，指向初始化数组
-     *
-     */
     ROM(sc_module_name name, uint32_t size, uint32_t *rom_content, uint32_t latency_clk)
         : sc_module(name), ready("rom_ready"), data("rom_data_out")
     {
@@ -41,7 +32,6 @@ SC_MODULE(ROM)
         // Korpieren die Inhalte auf memory
         while (i < size)
         {
-            // ROM 不再负责校验数组，数组空缺的部分由RP负责填充0，因此也不用处理缺失部分
             uint32_t word = rom_content[0];
             for (int k = 0; k < 4; ++k)
             {
@@ -55,11 +45,6 @@ SC_MODULE(ROM)
         sensitive << clk.pos();
     }
 
-    /**
-     * 返回ROM存储区大小
-     *
-     * @return int, ROM大小
-     */
     int size()
     {
         return memory.size();
@@ -76,7 +61,8 @@ SC_MODULE(ROM)
                 error.write(false);
 
                 // latency Simulation
-                for(int i =0;i < latency;i++){
+                for (int i = 0; i < latency; i++)
+                {
                     wait();
                 }
 
@@ -86,12 +72,13 @@ SC_MODULE(ROM)
                     if (memory.count(addresse))
                     {
                         data.write(static_cast<uint32_t>(memory[addresse]));
-                        printf("ROM found 1B value: 0x%08x at Address 0x%08x.\n", static_cast<uint32_t>(memory[addresse]), addresse);
+                        printf("ROM hat 1B-Wert gefunden: 0x%08x an Adresse 0x%08x.\n", static_cast<uint32_t>(memory[addresse]), addresse);
                         ready.write(true);
                     }
                     else
                     {
-                        SC_REPORT_WARNING("ROM", "Read from unmapped address (byte)");
+                        // Dieser Fall sollte nicht auftreten: Der Memory-Controller sollte die Adresse an den Hauptspeicher weiterleiten.
+                        SC_REPORT_WARNING("ROM", "Lesezugriff auf nicht zugewiesene Adresse (Byte)");
                         data.write(0xFF);
                         ready.write(true);
                     }
@@ -115,12 +102,14 @@ SC_MODULE(ROM)
                         }
                         else
                         {
-                            SC_REPORT_WARNING("ROM", "Read from unmapped address (word)");
+                            // Zugriff auf eine Adresse außerhalb des ROM-Bereichs
+                            // Dieser Fall sollte nicht auftreten – die Alignment-Prüfung sollte ihn abfangen.
+                            SC_REPORT_WARNING("ROM", "Lesezugriff auf nicht zugewiesene Adresse (Byte)");
                             result |= 0xFF << (8 * i);
                         }
                     }
                     data.write(result);
-                    printf("ROM found 4B value: 0x%08x at Address 0x%08x.\n", result, addresse);
+                    printf("ROM hat 4B-Wert gefunden: 0x%08x an Adresse 0x%08x.\n", result, addresse);
                     ready.write(true);
                 }
             }
