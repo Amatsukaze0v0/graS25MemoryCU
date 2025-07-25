@@ -215,8 +215,8 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
     {
         if (is_line_empty(line))
         {
-            current_line++;
-            continue;
+            fprintf(stderr, "Fehler in Zeile %u: Empty Line\n", current_line);
+            goto parse_error;
         }
 
         char *token;
