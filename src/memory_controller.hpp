@@ -41,7 +41,7 @@ SC_MODULE(MEMORY_CONTROLLER)
         {
             rom_content = new uint32_t[rom_size / sizeof(uint32_t)]();
         }
-        printf("ROM size is: %d\n", rom_size);
+        printf("ROM size is: %d Bytes.\n", rom_size);
         rom = new ROM("rom", rom_size, rom_content, latency_rom);
         rom->read_en(rom_read_en);
         rom->clk(clk);
@@ -105,7 +105,6 @@ SC_MODULE(MEMORY_CONTROLLER)
         if (addr.read() < rom->size())
         {
             uint32_t address = addr.read();
-            printf("ROM size is %d. \n", rom->size());
             // Überprüfung, ob die 4-Byte-ausgerichtete Adresse außerhalb des ROM-Bereichs liegt
             if (wide.read() && rom->size() < 4 || address > rom->size() - 4)
             {

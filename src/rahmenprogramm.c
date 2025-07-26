@@ -196,8 +196,12 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
         fclose(file);
         return 1;
     }
-
-    const char *expected_header = "\"Type\",\"Address\",\"Data\",\"User\",\"Wide\"\n";
+    // 去除行尾换行符
+    size_t len = strlen(line);
+    while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r')) {
+        line[--len] = '\0';
+    }
+    const char *expected_header = "\"Type\",\"Address\",\"Data\",\"User\",\"Wide\"";
     if (strcmp(line, expected_header) != 0)
     {
         fprintf(stderr, "Fehler: Ungültiger Header! Erwartet: %s", expected_header);

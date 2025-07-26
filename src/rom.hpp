@@ -57,7 +57,6 @@ SC_MODULE(ROM)
             wait();
             if (read_en.read())
             {   
-                printf("ROM reading.\n");
                 ready.write(false);
                 error.write(false);
 
