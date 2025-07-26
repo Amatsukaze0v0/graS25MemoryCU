@@ -1,0 +1,5 @@
+"Type","","Data","User","Wide" # Ungültiger Header
+# Leere Line (trotz Comment) nicht erlaubt
+"W","0x00","","42","T" #Write ohne Data nicht erlaubt
+"W","0x23","0xade","200","F" # 1B-Write mit zu gross Data nicht erlaubt
+"R","0x00","666","42","F" # Read mit Data nicht erlaubt

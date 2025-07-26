@@ -191,6 +191,13 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
     if (!fgets(line, sizeof(line), file))
     {
         fprintf(stderr, "Fehler: CSV-Datei ist leer!\n");
+        goto parse_error;
+    }
+
+    const char *expected_header = "\"Type\",\"Address\",\"Data\",\"User\",\"Wide\"\n";
+    if (strcmp(line, expected_header) != 0)
+    {
+        fprintf(stderr, "Fehler: Ungültiger Header! Erwartet: %s", expected_header);
         fclose(file);
         return 1;
     }
