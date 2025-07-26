@@ -151,7 +151,6 @@ struct Result run_simulation(
         wide.write(false);
         mem_ready.write(false);
         ready.write(false);
-        error.write(false);
         mem_r.write(false);
         mem_w.write(false);
 

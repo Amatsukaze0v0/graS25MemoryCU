@@ -192,9 +192,9 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
     if (!fgets(line, sizeof(line), file))
     {
         fprintf(stderr, "Fehler: CSV-Datei ist leer!\n");
-                    free(*requests);
-    fclose(file);
-    return 1;
+        free(*requests);
+        fclose(file);
+        return 1;
     }
 
     const char *expected_header = "\"Type\",\"Address\",\"Data\",\"User\",\"Wide\"\n";
@@ -292,16 +292,16 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
             if (parse_number(fields[2], &r.data) != 0)
             {
                 fprintf(stderr, "Fehler in Zeile %u: Ungültige Daten '%s'\n", current_line, fields[2]);
-            error = 1;
-            break;
+                error = 1;
+                break;
             }
             if (fields[4][0] == 'F' || fields[4][0] == 'f')
             {
                 if (r.data > 0xFF)
                 {
                     fprintf(stderr, "Fehler in Zeile %u: Narrow-Write-Daten zu groß: 0x%x\n", current_line, r.data);
-            error = 1;
-            break;
+                    error = 1;
+                    break;
                 }
             }
         }
@@ -310,8 +310,8 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
             if (fields[2] != NULL && strlen(fields[2]) > 0)
             {
                 fprintf(stderr, "Fehler in Zeile %u: Leseanforderung darf keine Daten enthalten\n", current_line);
-            error = 1;
-            break;
+                error = 1;
+                break;
             }
             r.data = 0;
         }

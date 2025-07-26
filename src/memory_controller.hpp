@@ -130,6 +130,7 @@ SC_MODULE(MEMORY_CONTROLLER)
                 rdata.write(data_cu_rom.read());
                 rom_read_en.write(0);
                 ready.write(1);
+                error.write(0);
                 printf("[MC] rdata set to 0x%08X, ready=1\n", data_cu_rom.read());
             }
             else
@@ -155,6 +156,7 @@ SC_MODULE(MEMORY_CONTROLLER)
                 printf("[MC] memory 4B read beendet: addr=0x%08X, mem_rdata=0x%08X\n", address, mem_rdata.read());
                 rdata.write(mem_rdata.read());
                 ready.write(1);
+                error.write(0);
             }
             else
             {
@@ -172,6 +174,7 @@ SC_MODULE(MEMORY_CONTROLLER)
                 rdata.write(real_data);
                 printf("[MC] memory 1B read beendet: addr=0x%08X, mem_rdata=0x%08X\n", addr.read(), real_data);
                 ready.write(1);
+                error.write(0);
             }
         }
     }
@@ -217,6 +220,7 @@ SC_MODULE(MEMORY_CONTROLLER)
             mem_w.write(0);
             printf("[MC] memory write beendet: addr=0x%08X, wdata=0x%08X\n", addr.read(), new_data);
             ready.write(1);
+            error.write(0);
         }
         else
         {
@@ -290,9 +294,9 @@ SC_MODULE(MEMORY_CONTROLLER)
 
     uint8_t getOwner(uint32_t addr)
     {
-        uint32_t block_addr = (addr / block_size) * block_size;
+        uint32_t block_addr = (addr - rom_size) * block_size;
         auto it = gewalt.find(block_addr);
-        return it != gewalt.end() ? it->second : 0;
+        return it != gewalt.end() ? it->second : 255;
     }
 };
 
