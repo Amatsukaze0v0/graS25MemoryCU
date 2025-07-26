@@ -86,6 +86,7 @@ struct Result run_simulation(
         sc_trace(tf, user, "user");
 
         sc_trace(tf, memory->ready, "Memory_ready_signal");
+        sc_trace(tf, memory_controller->ready_cu_rom, "rom_ready");
 
         std::cout << "[TRACE] Tracing enabled: " << tfname << ".vcd\n";
     }

@@ -180,7 +180,8 @@ uint32_t *load_rom_content(const char *filename, uint32_t rom_size)
 
 bool is_line_empty(const char *line);
 int parse_csv_file(const char *filename, struct Request **requests, uint32_t *num_requests)
-{
+{   
+    int error = 0;
     FILE *file = fopen(filename, "r");
     if (!file)
     {
@@ -191,7 +192,9 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
     if (!fgets(line, sizeof(line), file))
     {
         fprintf(stderr, "Fehler: CSV-Datei ist leer!\n");
-        goto parse_error;
+                    free(*requests);
+    fclose(file);
+    return 1;
     }
 
     const char *expected_header = "\"Type\",\"Address\",\"Data\",\"User\",\"Wide\"\n";
@@ -223,7 +226,8 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
         if (is_line_empty(line))
         {
             fprintf(stderr, "Fehler in Zeile %u: Empty Line\n", current_line);
-            goto parse_error;
+            error = 1;
+            break;
         }
 
         char *token;
@@ -244,7 +248,8 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
         if (field_count != 5)
         {
             fprintf(stderr, "Fehler in Zeile %u: 5 Parameter erwartet, aber %d erhalten\n", current_line, field_count);
-            goto parse_error;
+            error = 1;
+            break;
         }
 
         struct Request r;
@@ -263,14 +268,16 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
         else
         {
             fprintf(stderr, "Fehler in Zeile %u: Unbekannter Typ '%s'\n", current_line, fields[0]);
-            goto parse_error;
+            error = 1;
+            break;
         }
 
         // address (fields[1])
         if (parse_number(fields[1], &r.addr) != 0)
         {
             fprintf(stderr, "Fehler in Zeile %u: Ungültige Adresse '%s'\n", current_line, fields[1]);
-            goto parse_error;
+            error = 1;
+            break;
         }
 
         // data (fields[2])
@@ -279,19 +286,22 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
             if (fields[2] == NULL || strlen(fields[2]) == 0)
             {
                 fprintf(stderr, "Fehler in Zeile %u: Schreibanforderung muss Daten enthalten\n", current_line);
-                goto parse_error;
+                error = 1;
+                break;
             }
             if (parse_number(fields[2], &r.data) != 0)
             {
                 fprintf(stderr, "Fehler in Zeile %u: Ungültige Daten '%s'\n", current_line, fields[2]);
-                goto parse_error;
+            error = 1;
+            break;
             }
             if (fields[4][0] == 'F' || fields[4][0] == 'f')
             {
                 if (r.data > 0xFF)
                 {
                     fprintf(stderr, "Fehler in Zeile %u: Narrow-Write-Daten zu groß: 0x%x\n", current_line, r.data);
-                    goto parse_error;
+            error = 1;
+            break;
                 }
             }
         }
@@ -300,7 +310,8 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
             if (fields[2] != NULL && strlen(fields[2]) > 0)
             {
                 fprintf(stderr, "Fehler in Zeile %u: Leseanforderung darf keine Daten enthalten\n", current_line);
-                goto parse_error;
+            error = 1;
+            break;
             }
             r.data = 0;
         }
@@ -310,7 +321,8 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
         if (parse_number(fields[3], &user) != 0 || user > 255)
         {
             fprintf(stderr, "Fehler in Zeile %u: Ungültiger Benutzer '%s'\n", current_line, fields[3]);
-            goto parse_error;
+            error = 1;
+            break;
         }
         r.user = (uint8_t)user;
 
@@ -326,17 +338,20 @@ int parse_csv_file(const char *filename, struct Request **requests, uint32_t *nu
         else
         {
             fprintf(stderr, "Fehler in Zeile %u: Ungültiges Wide-Flag '%s'\n", current_line, fields[4]);
-            goto parse_error;
+            error = 1;
+            break;
         }
 
         (*requests)[(*num_requests)++] = r;
         current_line++;
         continue;
 
-    parse_error:
-        free(*requests);
-        fclose(file);
-        return 1;
+    }
+
+    if (error) {
+            free(*requests);
+    fclose(file);
+    return 1;
     }
     fclose(file);
     return 0;

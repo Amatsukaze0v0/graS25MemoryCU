@@ -56,7 +56,8 @@ SC_MODULE(ROM)
         {
             wait();
             if (read_en.read())
-            {
+            {   
+                printf("ROM reading.\n");
                 ready.write(false);
                 error.write(false);
 
@@ -90,7 +91,7 @@ SC_MODULE(ROM)
                         data.write(0x00);
                         error.write(true);
                         ready.write(true);
-                        return;
+                        continue;
                     }
                     uint32_t result = 0;
                     for (int i = 0; i < 4; ++i)

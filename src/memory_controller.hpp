@@ -105,7 +105,7 @@ SC_MODULE(MEMORY_CONTROLLER)
         if (addr.read() < rom->size())
         {
             uint32_t address = addr.read();
-
+            printf("ROM size is %d. \n", rom->size());
             // Überprüfung, ob die 4-Byte-ausgerichtete Adresse außerhalb des ROM-Bereichs liegt
             if (wide.read() && rom->size() < 4 || address > rom->size() - 4)
             {
